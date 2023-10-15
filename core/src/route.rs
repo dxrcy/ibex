@@ -14,6 +14,7 @@ impl Route {
     }
 }
 
+#[derive(Debug)]
 pub struct RouteFile {
     path: String,
     content: String,

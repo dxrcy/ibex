@@ -25,7 +25,7 @@ enum Node {
     Expression(TokenStream),
     Function(Function),
     If(TokenStream, View, Option<View>),
-    // For
+    For(TokenStream, TokenStream, View),
 }
 
 #[derive(Debug)]
@@ -117,6 +117,12 @@ impl ToTokens for Node {
                     }
                 )}),
             },
+            Node::For(item, source, block) => tokens.extend(quote! {
+                ibex::compose::Node::Fragment(ibex::compose::View(
+                    #source.map(|(#item)| {
+                        ibex::compose::Node::Fragment(#block)
+                    }).collect::<Vec<_>>()
+            ))}),
         }
     }
 }
@@ -356,10 +362,53 @@ fn parse_view(input: TokenStream) -> View {
                                 nodes.push(Node::If(condition, then, otherwise));
                             }
 
-                            "for" => unimplemented!(),
-                            statement => {
-                                panic!("Invalid statement");
+                            "for" => {
+                                // item
+                                let item = match stream.next() {
+                                    Some(TokenTree::Group(group))
+                                        if group.delimiter() == Delimiter::Parenthesis =>
+                                    {
+                                        group.stream()
+                                    }
+                                    _ => panic!(
+                                        "`for` statement item must be a group with parenthesis"
+                                    ),
+                                };
+
+                                // `in`
+                                match stream.next() {
+                                    Some(TokenTree::Ident(ident)) if ident.to_string() == "in" => {}
+                                    _ => panic!("`for` statement must have `in` keyword"),
+                                }
+
+                                // source
+                                let source = match stream.next() {
+                                    Some(TokenTree::Group(group))
+                                        if group.delimiter() == Delimiter::Parenthesis =>
+                                    {
+                                        group.stream()
+                                    }
+                                    _ => panic!(
+                                        "`for` statement source must be a group with parenthesis"
+                                    ),
+                                };
+
+                                // for block
+                                let block = match stream.next() {
+                                    Some(TokenTree::Group(group))
+                                        if group.delimiter() == Delimiter::Brace =>
+                                    {
+                                        parse_view(group.stream())
+                                    }
+                                    _ => {
+                                        panic!("`for` statement block must be a group with braces")
+                                    }
+                                };
+
+                                nodes.push(Node::For(item, source, block));
                             }
+
+                            _ => panic!("Invalid statement"),
                         }
                         continue;
                     }
