@@ -1,6 +1,5 @@
 use crate::compose::Attribute;
-use crate::dom::Document;
-use crate::dom::DomNode;
+use crate::dom::{Document, DomNode};
 
 pub fn render(page: Document) -> String {
     format!(

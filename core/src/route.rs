@@ -14,23 +14,23 @@ impl Route {
     }
 }
 
-pub struct File {
+pub struct RouteFile {
     path: String,
     content: String,
 }
 
-pub fn render_routes(routes: Vec<Route>) -> Vec<File> {
+pub fn render_routes(routes: Vec<Route>) -> Vec<RouteFile> {
     routes.into_iter().map(render_route).collect()
 }
 
-pub fn render_route(route: Route) -> File {
-    File {
+pub fn render_route(route: Route) -> RouteFile {
+    RouteFile {
         path: url_path_to_filepath(&route.url_path),
         content: route.document.render(),
     }
 }
 
-pub fn write_files(files: Vec<File>) -> Result<(), io::Error> {
+pub fn write_files(files: Vec<RouteFile>) -> Result<(), io::Error> {
     let folder = "build";
 
     if Path::new(folder).exists() {

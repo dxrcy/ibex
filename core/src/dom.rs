@@ -1,26 +1,23 @@
-use crate::compose::Attribute;
-use crate::compose::Node;
-use crate::compose::Tag;
-use crate::compose::View;
+use crate::compose::{Attribute, Node, Tag, View};
 use crate::render::render;
 
 #[derive(Clone, Debug)]
 pub struct Document {
-    pub head: DomElement,
-    pub body: DomElement,
+    pub(super) head: DomElement,
+    pub(super) body: DomElement,
 }
 
 #[derive(Clone, Debug)]
-pub enum DomNode {
+pub(super) enum DomNode {
     Element(DomElement),
     Text(String),
 }
 
 #[derive(Clone, Debug)]
-pub struct DomElement {
-    pub tag: Tag,
-    pub attributes: Vec<Attribute>,
-    pub children: Vec<DomNode>,
+pub(super) struct DomElement {
+    pub(super) tag: Tag,
+    pub(super) attributes: Vec<Attribute>,
+    pub(super) children: Vec<DomNode>,
 }
 
 impl From<View> for Document {
@@ -51,7 +48,7 @@ pub fn convert(view: View) -> Document {
     Document { head, body }
 }
 
-pub fn convert_nodes(view: View, head: &mut DomElement) -> Vec<DomNode> {
+fn convert_nodes(view: View, head: &mut DomElement) -> Vec<DomNode> {
     view.0
         .into_iter()
         .map(|node| convert_node(node, head))

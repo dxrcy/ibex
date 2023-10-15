@@ -1,4 +1,4 @@
-// Re-export all modules (no items)
+// Re-export all core modules (no items)
 pub use core::*;
 
 pub mod prelude {
