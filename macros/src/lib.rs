@@ -43,7 +43,7 @@ struct Function {
 #[derive(Debug)]
 struct Attribute {
     name: String,
-    value: Option<TokenStream>,
+    value: TokenStream,
 }
 
 impl ToTokens for View {
@@ -141,10 +141,7 @@ impl ToTokens for Element {
 
         let mut attributes_tokens = TokenStream::new();
         for Attribute { name, value } in attributes {
-            let value = match value {
-                Some(value) => quote! { Some((#value).to_string()) },
-                None => quote! { None },
-            };
+            let value = quote! { Some((#value).to_string()) };
             attributes_tokens.extend(quote! {
                 ibex::compose::Attribute {
                     name: #name.to_string(),
@@ -198,21 +195,28 @@ fn parse_view(input: TokenStream) -> View {
                             };
                             let name = name.to_string();
 
-                            let value = match group.next() {
-                                Some(TokenTree::Punct(punct)) if punct.to_string() == "=" => {
-                                    let Some(value) = group.next() else {
-                                        panic!("Missing attribute value");
-                                    };
-                                    let value = parse_value(value.to_token_stream());
-                                    Some(value)
+                            let mut value = TokenStream::new();
+
+                            if let Some(TokenTree::Punct(punct)) = group.next() {
+                                if punct.to_string() == "," {
+                                    panic!("Unexpected punctuation token `{}`. Expected value or end of attributes", punct);
                                 }
-                                Some(TokenTree::Punct(punct)) if punct.to_string() == "," => None,
-                                None => None,
-                                Some(token) => panic!(
-                                    "Unexpected token `{}`. Expected one of `]`, `,`, or `=`",
-                                    token
-                                ),
-                            };
+                            }
+
+                            loop {
+                                let next = group.peek();
+                                match next {
+                                    Some(TokenTree::Punct(punct)) if punct.to_string() == "," => {
+                                        group.next();
+                                        break;
+                                    }
+                                    None => break,
+                                    Some(token) => {
+                                        value.extend(token.to_token_stream());
+                                        group.next();
+                                    }
+                                }
+                            }
 
                             attributes.push(Attribute { name, value });
 
@@ -434,26 +438,26 @@ fn parse_view(input: TokenStream) -> View {
     View(nodes)
 }
 
-/// If input is a square bracket group starting with tokens `:?`,
-///     wrap the rest of the group in a debug format
-/// If not, return input string
-fn parse_value(input: TokenStream) -> TokenStream {
-    let mut tokens = input.clone().into_iter();
-
-    // (awful code)
-    if let Some(TokenTree::Group(group)) = tokens.next() {
-        let mut stream = group.stream().into_iter();
-        if let Some(TokenTree::Punct(punct)) = stream.next() {
-            if punct.to_string() == ":" {
-                if let Some(TokenTree::Punct(punct)) = stream.next() {
-                    if punct.to_string() == "?" {
-                        let rest: TokenStream = stream.collect();
-                        return quote! { format!("{:?}", #rest) };
-                    }
-                }
-            }
-        }
-    }
-
-    input
-}
+// If input is a square bracket group starting with tokens `:?`,
+//     wrap the rest of the group in a debug format
+// If not, return input string
+// fn parse_value(input: TokenStream) -> TokenStream {
+//     let mut tokens = input.clone().into_iter();
+//
+//     // (awful code)
+//     if let Some(TokenTree::Group(group)) = tokens.next() {
+//         let mut stream = group.stream().into_iter();
+//         if let Some(TokenTree::Punct(punct)) = stream.next() {
+//             if punct.to_string() == ":" {
+//                 if let Some(TokenTree::Punct(punct)) = stream.next() {
+//                     if punct.to_string() == "?" {
+//                         let rest: TokenStream = stream.collect();
+//                         return quote! { format!("{:?}", #rest) };
+//                     }
+//                 }
+//             }
+//         }
+//     }
+//
+//     input
+// }

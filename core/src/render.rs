@@ -52,7 +52,7 @@ fn format_attributes(attributes: Vec<Attribute>) -> String {
             .into_iter()
             .map(|attribute| match attribute.value {
                 None => attribute.name,
-                Some(value) => attribute.name + "=" + &value,
+                Some(value) => attribute.name + "=\"" + &value + "\"",
             })
             .collect::<Vec<_>>()
             .join(" ")
