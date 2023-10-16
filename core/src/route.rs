@@ -119,14 +119,19 @@ macro_rules! routes {
             + &routes!(@path $($tt)*)
     };
     (@path
-        $x:ident $($tt:tt)*
+        $x:ident $(-$y:ident)* $(/ $($tt:tt)* )?
     ) => {
-        stringify!($x).to_string()
+        stringify!( $x $(-$y)* ).to_string()
+            + &routes!(@path $(/ $($tt)* )? )
+    };
+    (@path
+        $x:literal $($tt:tt)*
+    ) => {
+        $x.to_string()
             + &routes!(@path $($tt)*)
     };
     (@path
-        [$x:expr]
-        $($tt:tt)*
+        [$x:expr] $($tt:tt)*
     ) => {
         $x.to_string()
             + &routes!(@path $($tt)*)
