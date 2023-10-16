@@ -308,7 +308,6 @@ fn parse_view(input: TokenStream) -> View {
                         let Some(TokenTree::Ident(statement)) = stream.next() else {
                             panic!("Missing or invalid statement");
                         };
-                        println!("'{}'", statement);
                         match statement.to_string().as_str() {
                             "if" => {
                                 let condition = match stream.next() {
