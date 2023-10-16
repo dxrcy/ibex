@@ -185,10 +185,12 @@ fn parse_view(input: TokenStream) -> View {
                     Some(tag)
                 };
 
-                let attributes = match tokens.peek() {
-                    Some(TokenTree::Group(group)) if group.delimiter() == Delimiter::Bracket => {
+                // Attributes
+                let mut attributes = Vec::new();
+                if let Some(TokenTree::Group(group)) = tokens.peek() {
+                    if group.delimiter() == Delimiter::Bracket {
                         let mut group = group.stream().into_iter().peekable();
-                        let mut attributes = Vec::new();
+                        tokens.next();
 
                         loop {
                             let Some(name) = group.next() else {
@@ -224,12 +226,8 @@ fn parse_view(input: TokenStream) -> View {
                                 break;
                             }
                         }
-
-                        tokens.next();
-                        attributes
                     }
-                    _ => Vec::new(),
-                };
+                }
 
                 let Some(next) = tokens.next() else {
                     panic!("Unexpected end. Missing braces or single slash.");
