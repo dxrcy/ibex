@@ -1,7 +1,11 @@
-use crate::compose::Attribute;
-use crate::dom::{Document, DomNode};
+use crate::compose::{Attribute, Tag};
+use crate::dom::{Document, DomElement, DomNode};
 
 pub fn render(page: Document) -> String {
+    if !page.head.attributes.is_empty() || !page.body.attributes.is_empty() {
+        panic!("Cannot use attributes on <head> or <body> tags (how did you even get this error?)");
+    }
+
     format!(
         concat!(
             r"<!DOCTYPE html>",
@@ -30,15 +34,25 @@ fn render_nodes(nodes: Vec<DomNode>) -> String {
 
 fn render_node(node: DomNode) -> String {
     match node {
-        DomNode::Element(element) => {
-            format!(
-                "<{tag}{attrs}>{content}</{tag}>",
-                tag = element.tag,
-                attrs = format_attributes(element.attributes),
-                content = render_nodes(element.children),
-            )
-        }
+        DomNode::Element(element) => render_element(element),
         DomNode::Text(text) => text,
+    }
+}
+
+fn render_element(element: DomElement) -> String {
+    match element.tag {
+        Tag::Br => {
+            if !element.attributes.is_empty() || !element.children.is_empty() {
+                panic!("Cannot use attributes or children on <br> tag");
+            }
+            "<br>".to_string()
+        }
+        _ => format!(
+            "<{tag}{attrs}>{content}</{tag}>",
+            tag = element.tag,
+            attrs = format_attributes(element.attributes),
+            content = render_nodes(element.children),
+        ),
     }
 }
 
