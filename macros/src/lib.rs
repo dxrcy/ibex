@@ -1,10 +1,8 @@
-#![allow(unused)]
-
 use proc_macro as pm1;
 
-use proc_macro2::{Delimiter, Punct, TokenStream, TokenTree};
+use proc_macro2::{Delimiter, TokenStream, TokenTree};
 use quote::{quote, ToTokens};
-use syn::{braced, parse::Parse, parse_macro_input, token::Token, Item, Lit, Token};
+use syn::Lit;
 
 use core::compose::Tag;
 
