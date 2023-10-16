@@ -8,6 +8,7 @@ Still a work in progress.
 
 ```rs
 fn blog_page(blog: BlogPost) -> Document {
+    // Creates a `View` and converts to `Document`
     view! {
         // Calls a function `header(true)`
         @header[true]
@@ -22,7 +23,7 @@ fn blog_page(blog: BlogPost) -> Document {
         }
 
         // Use debug formatting to put string in quotes
-        image [src=[:?blog.image]]/
+        img [src=blog.image]/
     }
     .into()
 }
