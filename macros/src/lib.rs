@@ -413,7 +413,16 @@ fn parse_view(input: TokenStream) -> View {
                 nodes.push(Node::Expression(stream.collect()));
             }
 
+            // Tilde for whitespace
             TokenTree::Punct(punct) if punct.to_string() == "~" => {
+                // Double tilde for linebreak
+                if let Some(TokenTree::Punct(punct)) = tokens.peek() {
+                    if punct.to_string() == "~" {
+                        tokens.next();
+                        nodes.push(Node::Literal("\n".to_string()));
+                        continue;
+                    }
+                }
                 nodes.push(Node::Literal(" ".to_string()));
             }
 
