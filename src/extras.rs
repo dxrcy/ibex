@@ -32,17 +32,22 @@ macro_rules! url {
 
 /// Shorthand to define `struct Meta` with fields and matching builder functions
 macro_rules! define_meta {
-    ( $(
-        #[$($meta:tt)*]
-        $name:ident
-    ),* $(,)? ) => {
+    (
+        $(
+            #[$($meta:tt)*]
+            $name:ident
+        ),* $(,)?
+        ---
+        $($rest:tt)*
+    ) => {
         /// Construct many <meta> tag for `use_meta`
         ///
         /// Includes aliases of similar tags, eg. `url` and `og:url`
         #[derive(Debug, Default, Clone)]
-        pub struct Meta { $(
-            $name: Option<String>,
-        )* }
+        pub struct Meta {
+            $( $name: Option<String>, )*
+            $($rest)*
+        }
 
         impl Meta { $(
             /// Add a <meta> tag group
@@ -70,11 +75,19 @@ define_meta! {
     author,
     /// `theme-color`
     color,
+    ---
+    large_image: bool,
 }
 
 impl Meta {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// `twitter:card`
+    pub fn large_image(mut self, large_image: bool) -> Self {
+        self.large_image = large_image;
+        self
     }
 }
 
@@ -120,8 +133,11 @@ pub fn use_meta(meta: Meta) -> View {
                 meta [name="theme-color", content=color]/
             }} else { view! {}}]
 
-            meta [property="og:type", content="website"]/
-            meta [name="twitter:card", content="summary_large_image"]/
+            [*if (meta.large_image) {
+                meta [name="twitter:card", content="summary_large_image"]/
+            }]
+
+            // meta [property="og:type", content="website"]/
         }
     }
 }
