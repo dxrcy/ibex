@@ -36,7 +36,6 @@ macro_rules! define_tag {
                 }
             }
         }
-
         impl TryFrom<&str> for Tag {
             type Error = ();
             fn try_from(value: &str) -> Result<Self, Self::Error> {
