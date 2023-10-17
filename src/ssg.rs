@@ -20,6 +20,13 @@ pub struct RouteFile {
     content: String,
 }
 
+pub fn build(routes: Vec<Route>) -> io::Result<()> {
+    let files = render_routes(routes);
+    write_files(files)?;
+    copy_static()?;
+    Ok(())
+}
+
 pub fn render_routes(routes: Vec<Route>) -> Vec<RouteFile> {
     routes.into_iter().map(render_route).collect()
 }
