@@ -1,6 +1,8 @@
+/// List of component nodes
 #[derive(Clone, Debug)]
 pub struct View(pub Vec<Node>);
 
+/// Abstract component node
 #[derive(Clone, Debug)]
 pub enum Node {
     HeadAppend(View),
@@ -9,6 +11,7 @@ pub enum Node {
     Text(String),
 }
 
+/// Html-like element
 #[derive(Clone, Debug)]
 pub struct Element {
     pub tag: Tag,
@@ -16,12 +19,15 @@ pub struct Element {
     pub children: View,
 }
 
-macro_rules! element_tag {
+/// Shorthand to define `enum Tag` with methods to convert into and from a string
+macro_rules! define_tag {
     ( $( $ident:ident $str:literal ),* $(,)? ) => {
+        /// Html tag for `Element` and `DomElement`
         #[derive(Clone, Copy, Debug)]
-        pub enum Tag {
-            $( $ident, )*
-        }
+        pub enum Tag { $(
+            /// Html tag
+            $ident,
+        )* }
 
         impl Into<&'static str> for Tag {
             fn into(self) -> &'static str {
@@ -43,15 +49,20 @@ macro_rules! element_tag {
     };
 }
 
+define_tag! {
+    A "a", Abbr "abbr", Address "address", Article "article", Aside "aside", Audio "audio", B "b", Base "base", Bdi "bdi", Bdo "bdo", Big "big", Blockquote "blockquote", Body "body", Br "br", Button "button", Caption "caption", Center "center", Cite "cite", Code "code", Col "col", Colgroup "colgroup", Data "data", Datalist "datalist", Dd "dd", Del "del", Details "details", Dfn "dfn", Dialog "dialog", Div "div", Dl "dl", Dt "dt", Em "em", Embed "embed", Fieldset "fieldset", Figcaption "figcaption", Figure "figure", Footer "footer", Form "form", H1 "h1", H2 "h2", H3 "h3", H4 "h4", H5 "h5", H6 "h6", Head "head", Header "header", Hr "hr", Html "html", I "i", Iframe "iframe", Img "img", Input "input", Ins "ins", Kbd "kbd", Label "label", Legend "legend", Li "li", Link "link", Main "main", Map "map", Mark "mark", Meta "meta", Meter "meter", Nav "nav", Noscript "noscript", Object "object", Ol "ol", Optgroup "optgroup", Option "option", Output "output", P "p", Param "param", Picture "picture", Pre "pre", Progress "progress", Q "q", Rp "rp", Rt "rt", Ruby "ruby", S "s", Samp "samp", Script "script", Section "section", Select "select", Small "small", Source "source", Span "span", Strong "strong", Style "style", Sub "sub", Summary "summary", Sup "sup", Svg "svg", Table "table", Tbody "tbody", Td "td", Template "template", Textarea "textarea", Tfoot "tfoot", Th "th", Thead "thead", Time "time", Title "title", Tr "tr", Track "track", U "u", Ul "ul", Var "var", Video "video", Wbr "wbr"
+}
+
+/// Html attribute for `Element` and `DomElement`
 #[derive(Clone, Debug)]
 pub struct Attribute {
     pub name: String,
     pub value: String,
 }
 
-element_tag! {
-    A "a", Abbr "abbr", Address "address", Article "article", Aside "aside", Audio "audio", B "b", Base "base", Bdi "bdi", Bdo "bdo", Big "big", Blockquote "blockquote", Body "body", Br "br", Button "button", Caption "caption", Center "center", Cite "cite", Code "code", Col "col", Colgroup "colgroup", Data "data", Datalist "datalist", Dd "dd", Del "del", Details "details", Dfn "dfn", Dialog "dialog", Div "div", Dl "dl", Dt "dt", Em "em", Embed "embed", Fieldset "fieldset", Figcaption "figcaption", Figure "figure", Footer "footer", Form "form", H1 "h1", H2 "h2", H3 "h3", H4 "h4", H5 "h5", H6 "h6", Head "head", Header "header", Hr "hr", Html "html", I "i", Iframe "iframe", Img "img", Input "input", Ins "ins", Kbd "kbd", Label "label", Legend "legend", Li "li", Link "link", Main "main", Map "map", Mark "mark", Meta "meta", Meter "meter", Nav "nav", Noscript "noscript", Object "object", Ol "ol", Optgroup "optgroup", Option "option", Output "output", P "p", Param "param", Picture "picture", Pre "pre", Progress "progress", Q "q", Rp "rp", Rt "rt", Ruby "ruby", S "s", Samp "samp", Script "script", Section "section", Select "select", Small "small", Source "source", Span "span", Strong "strong", Style "style", Sub "sub", Summary "summary", Sup "sup", Svg "svg", Table "table", Tbody "tbody", Td "td", Template "template", Textarea "textarea", Tfoot "tfoot", Th "th", Thead "thead", Time "time", Title "title", Tr "tr", Track "track", U "u", Ul "ul", Var "var", Video "video", Wbr "wbr"
-}
+// ---------------------
+// Handy implementations
+// ---------------------
 
 impl std::fmt::Display for Tag {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
