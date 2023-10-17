@@ -46,7 +46,7 @@ macro_rules! element_tag {
 #[derive(Clone, Debug)]
 pub struct Attribute {
     pub name: String,
-    pub value: Option<String>,
+    pub value: String,
 }
 
 element_tag! {

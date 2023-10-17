@@ -77,15 +77,11 @@ fn format_attributes(attributes: Vec<Attribute>) -> String {
     if attributes.is_empty() {
         return String::new();
     }
-
     // Space to separate from tag name
     " ".to_string()
         + &attributes
             .into_iter()
-            .map(|attribute| match attribute.value {
-                None => attribute.name,
-                Some(value) => attribute.name + "=\"" + &value + "\"",
-            })
+            .map(|attribute| attribute.name + "=\"" + &attribute.value + "\"")
             .collect::<Vec<_>>()
             .join(" ")
 }

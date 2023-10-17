@@ -141,11 +141,10 @@ impl ToTokens for Element {
 
         let mut attributes_tokens = TokenStream::new();
         for Attribute { name, value } in attributes {
-            let value = quote! { Some((#value).to_string()) };
             attributes_tokens.extend(quote! {
                 ibex::compose::Attribute {
                     name: #name.to_string(),
-                    value: #value,
+                    value: (#value).to_string(),
                 },
             });
         }
