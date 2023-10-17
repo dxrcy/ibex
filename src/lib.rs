@@ -1,5 +1,7 @@
 /// Some built in features
 pub mod extras;
+/// Routing and file management for SSG apps
+pub mod ssg;
 
 pub use core::*;
 pub use extras::*;
@@ -9,7 +11,6 @@ pub mod prelude {
     pub use core::{
         compose::{Attribute, Element, Node, Tag, View},
         dom::Document,
-        route, routes,
     };
 
     pub use macros::view;

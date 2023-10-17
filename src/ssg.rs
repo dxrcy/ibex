@@ -31,20 +31,47 @@ pub fn render_route(route: Route) -> RouteFile {
     }
 }
 
-pub fn write_files(files: Vec<RouteFile>) -> Result<(), io::Error> {
-    let folder = "build";
+const BUILD_DIR: &str = "build";
+const STATIC_DIR: &str = "static";
 
-    if Path::new(folder).exists() {
-        fs::remove_dir_all(folder)?;
+pub fn write_files(files: Vec<RouteFile>) -> Result<(), io::Error> {
+    if Path::new(BUILD_DIR).exists() {
+        fs::remove_dir_all(BUILD_DIR)?;
     }
-    fs::create_dir_all(folder)?;
+    fs::create_dir_all(BUILD_DIR)?;
 
     for file in files {
-        let path = format!("{folder}/{}", file.path);
+        let path = format!("{BUILD_DIR}/{}", file.path);
         create_parent_folder(&path)?;
         fs::write(path, file.content)?;
     }
 
+    Ok(())
+}
+
+pub fn copy_static() -> io::Result<()> {
+    copy_folder(
+        Path::new(STATIC_DIR),
+        Path::new(&format!("{BUILD_DIR}/static")),
+    )
+}
+
+fn copy_folder(src: &Path, dest: &Path) -> io::Result<()> {
+    if src.is_dir() {
+        fs::create_dir_all(dest)?;
+
+        for entry in fs::read_dir(src)? {
+            let entry = entry?;
+            let entry_path = entry.path();
+            let dest_path = dest.join(entry.file_name());
+
+            if entry_path.is_dir() {
+                copy_folder(&entry_path, &dest_path)?;
+            } else {
+                fs::copy(&entry_path, &dest_path)?;
+            }
+        }
+    }
     Ok(())
 }
 
@@ -90,7 +117,7 @@ macro_rules! routes {
         ( $($tt:tt)* )
         => $expr:expr
     ) => {
-        vec![::ibex::route::Route::new(
+        vec![::ibex::ssg::Route::new(
             ::ibex::routes!(@path $($tt)*),
             $expr,
         )]
@@ -103,12 +130,12 @@ macro_rules! routes {
     ) => {
         $src
             .map(|$args|
-                ::ibex::route::Route::new(
+                ::ibex::ssg::Route::new(
                     ::ibex::routes!(@path $($tt)*),
                     $expr,
                 )
             )
-            .collect::<Vec<::ibex::route::Route>>()
+            .collect::<Vec<::ibex::ssg::Route>>()
     };
 
     (@path) => { "" };
@@ -118,12 +145,6 @@ macro_rules! routes {
         "/".to_string()
             + &routes!(@path $($tt)*)
     };
-    // (@path
-    //     $x:ident $($tt:tt)*
-    // ) => {
-    //     stringify!($x).to_string()
-    //         + &routes!(@path $($tt)* )
-    // };
     (@path
         $x:literal $($tt:tt)*
     ) => {

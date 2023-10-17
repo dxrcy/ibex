@@ -4,5 +4,3 @@ pub mod compose;
 pub mod dom;
 /// Render DOM tree to string
 pub mod render;
-/// Define url routes and write to files (for SSG)
-pub mod route;
