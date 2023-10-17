@@ -41,19 +41,32 @@ fn render_node(node: DomNode) -> String {
 
 fn render_element(element: DomElement) -> String {
     match element.tag {
-        Tag::Br => {
-            if !element.attributes.is_empty() || !element.children.is_empty() {
-                panic!("Cannot use attributes or children on <br> tag");
-            }
-            "<br>".to_string()
+        Tag::Meta | Tag::Link | Tag::Img | Tag::Input | Tag::Br | Tag::Hr => {
+            render_element_self_closing(element)
         }
-        _ => format!(
-            "<{tag}{attrs}>{content}</{tag}>",
-            tag = element.tag,
-            attrs = format_attributes(element.attributes),
-            content = render_nodes(element.children),
-        ),
+        _ => render_element_with_children(element),
     }
+}
+
+/// Render an element with no innerHTML. Eg. `<br/>`
+fn render_element_self_closing(element: DomElement) -> String {
+    if !element.children.is_empty() {
+        panic!("Cannot use children on <{}/> tag", element.tag);
+    }
+    format!(
+        "<{tag}{attrs}/>",
+        tag = element.tag,
+        attrs = format_attributes(element.attributes),
+    )
+}
+/// Render an element with tag that supports innerHTML. Eg. `<a>...</a>`
+fn render_element_with_children(element: DomElement) -> String {
+    format!(
+        "<{tag}{attrs}>{content}</{tag}>",
+        tag = element.tag,
+        attrs = format_attributes(element.attributes),
+        content = render_nodes(element.children),
+    )
 }
 
 fn format_attributes(attributes: Vec<Attribute>) -> String {
