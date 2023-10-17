@@ -1,7 +1,8 @@
-mod extra;
+/// Some built in features
+pub mod extras;
 
 pub use core::*;
-pub use extra::*;
+pub use extras::*;
 pub use macros::view;
 
 pub mod prelude {
@@ -10,8 +11,9 @@ pub mod prelude {
         dom::Document,
         route, routes,
     };
-     
+
     pub use macros::view;
 
-    pub use crate::extra::{use_meta, Meta};
+    pub use crate::extras::{is_local, use_meta, Meta};
+    pub use crate::url;
 }
