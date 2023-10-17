@@ -7,13 +7,13 @@ Still a work in progress.
 ## Example
 
 ```rs
-fn blog_page(blog: BlogPost) -> Document {
+fn at_blog(blog: BlogPost) -> Document {
     // Creates a `View` and converts to `Document`
     view! {
         // Calls a function `header(true)`
         @header[true]
 
-        // Html elements
+        // Some html elements
         h2 { [blog.title] }
         h3 { i {[blog.author]} }
 
@@ -22,12 +22,13 @@ fn blog_page(blog: BlogPost) -> Document {
             [blog.body]
         }
 
-        // Use debug formatting to put string in quotes
+        // Variables can be used in attributes
+        // Use a slash to signify an empty element body
         img [src=blog.image]/
     }
     .into()
 }
 ```
 
-![svg design of an ibex](./ibex.png)
+![Ibex logo](./ibex.png)
 
