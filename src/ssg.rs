@@ -20,10 +20,19 @@ pub struct RouteFile {
     content: String,
 }
 
-pub fn build(routes: Vec<Route>) -> io::Result<()> {
+const BUILD_DIR: &str = "build";
+const STATIC_DIR: &str = "static";
+const SCSS_DIR: &str = "src/scss";
+
+pub fn quick_build(routes: Vec<Route>) -> io::Result<()> {
     let files = render_routes(routes);
     write_files(files)?;
-    copy_static()?;
+    if Path::new(STATIC_DIR).exists() {
+        copy_static()?;
+    }
+    if Path::new(SCSS_DIR).exists() {
+        convert_scss()?;
+    }
     Ok(())
 }
 
@@ -37,9 +46,6 @@ pub fn render_route(route: Route) -> RouteFile {
         content: route.document.render(),
     }
 }
-
-const BUILD_DIR: &str = "build";
-const STATIC_DIR: &str = "static";
 
 pub fn write_files(files: Vec<RouteFile>) -> Result<(), io::Error> {
     if Path::new(BUILD_DIR).exists() {
@@ -61,6 +67,43 @@ pub fn copy_static() -> io::Result<()> {
         Path::new(STATIC_DIR),
         Path::new(&format!("{BUILD_DIR}/static")),
     )
+}
+
+pub fn convert_scss() -> io::Result<()> {
+    convert_scss_folder(Path::new(SCSS_DIR), Path::new(&format!("{BUILD_DIR}/css")))
+}
+
+fn convert_scss_folder(src: &Path, dest: &Path) -> io::Result<()> {
+    if src.is_dir() {
+        fs::create_dir_all(dest)?;
+
+        for entry in fs::read_dir(src)? {
+            let entry = entry?;
+            let entry_path = entry.path();
+            let filename_dest = replace_scss_extension(&entry.file_name().to_string_lossy());
+            let dest_path = dest.join(filename_dest);
+
+            if entry_path.is_dir() {
+                copy_folder(&entry_path, &dest_path)?;
+            } else {
+                let scss = fs::read_to_string(entry_path)?;
+                let css = grass::from_string(scss, &Default::default())
+                    .expect("Failed to compile scss to css");
+                fs::write(dest_path, css)?;
+            }
+        }
+    }
+    Ok(())
+}
+
+fn replace_scss_extension(filename: &str) -> String {
+    let mut split: Vec<_> = filename.split(".").collect();
+    if split.last() == Some(&"scss") {
+        split.pop();
+        split.join(".") + ".css"
+    } else {
+        filename.to_string()
+    }
 }
 
 fn copy_folder(src: &Path, dest: &Path) -> io::Result<()> {

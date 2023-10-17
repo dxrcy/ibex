@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 core = { path = "./core" }
+grass = "0.13.1"
 macros = { path = "./macros" }
 # , optional = true }
 
