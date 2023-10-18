@@ -63,6 +63,11 @@ pub fn write_files(files: Vec<RouteFile>) -> Result<(), io::Error> {
 }
 
 pub fn copy_static() -> io::Result<()> {
+    // For development mode
+    // symlink::symlink_dir(
+    //     Path::new(STATIC_DIR),
+    //     Path::new(&format!("{BUILD_DIR}/static")),
+    // )
     copy_folder(
         Path::new(STATIC_DIR),
         Path::new(&format!("{BUILD_DIR}/static")),
