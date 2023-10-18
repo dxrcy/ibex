@@ -64,6 +64,7 @@ pub fn write_files(files: Vec<RouteFile>) -> Result<(), io::Error> {
 
 pub fn copy_static() -> io::Result<()> {
     // Symlink instead of copy for development mode
+    // Does not work for non-unix systems (nbd)
     copy_or_symlink_folder(
         Path::new(STATIC_DIR),
         Path::new(&format!("{BUILD_DIR}/static")),
@@ -71,12 +72,20 @@ pub fn copy_static() -> io::Result<()> {
     )
 }
 
+/// Copy or symlink a folder, depending on argument
+#[cfg(target_family = "unix")]
 fn copy_or_symlink_folder(src: &Path, dest: &Path, do_symlink: bool) -> io::Result<()> {
     if do_symlink {
-        symlink::symlink_dir(src, dest)
+        // Source path must be absolute (or relative to BUILD_DIR, but thats worse)
+        let src = fs::canonicalize(src)?;
+        std::os::unix::fs::symlink(src, dest)
     } else {
         copy_folder(src, dest)
     }
+}
+#[cfg(not(target_family = "unix"))]
+fn copy_or_symlink_folder(src: &Path, dest: &Path, _do_symlink: bool) -> io::Result<()> {
+    copy_folder(src, dest)
 }
 
 pub fn convert_scss() -> io::Result<()> {
