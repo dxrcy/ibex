@@ -63,15 +63,20 @@ pub fn write_files(files: Vec<RouteFile>) -> Result<(), io::Error> {
 }
 
 pub fn copy_static() -> io::Result<()> {
-    // For development mode
-    // symlink::symlink_dir(
-    //     Path::new(STATIC_DIR),
-    //     Path::new(&format!("{BUILD_DIR}/static")),
-    // )
-    copy_folder(
+    // Symlink instead of copy for development mode
+    copy_or_symlink_folder(
         Path::new(STATIC_DIR),
         Path::new(&format!("{BUILD_DIR}/static")),
+        crate::is_local(),
     )
+}
+
+fn copy_or_symlink_folder(src: &Path, dest: &Path, do_symlink: bool) -> io::Result<()> {
+    if do_symlink {
+        symlink::symlink_dir(src, dest)
+    } else {
+        copy_folder(src, dest)
+    }
 }
 
 pub fn convert_scss() -> io::Result<()> {
@@ -208,7 +213,7 @@ macro_rules! routes {
     ) => {
         compile_error!("please start route with slash");
     };
-    
+
     // Take a part from a route path and keep going
 
     (@path) => { "" };
