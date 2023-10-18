@@ -152,6 +152,7 @@ fn create_parent_folder(path: &str) -> Result<(), io::Error> {
     fs::create_dir_all(path.join("/"))
 }
 
+/// Define a vector of `Route`s
 #[macro_export]
 macro_rules! routes {
     ( $(
@@ -168,12 +169,14 @@ macro_rules! routes {
         )* ].concat()
     }};
 
+    // A single route
+
     (@one
         ( $($tt:tt)* )
         => $expr:expr
     ) => {
         vec![::ibex::ssg::Route::new(
-            ::ibex::routes!(@path $($tt)*),
+            ::ibex::routes!(@path_full $($tt)*).to_string(),
             $expr,
         )]
     };
@@ -186,14 +189,37 @@ macro_rules! routes {
         $src
             .map(|$args|
                 ::ibex::ssg::Route::new(
-                    ::ibex::routes!(@path $($tt)*),
+                    ::ibex::routes!(@path_full $($tt)*),
                     $expr,
                 )
             )
             .collect::<Vec<::ibex::ssg::Route>>()
     };
 
+    // Resolve a full route path
+
+    (@path_full
+        / $($tt:tt)*
+    ) => {
+        ::ibex::routes!(@path $($tt)*)
+    };
+    (@path_full
+        $($tt:tt)*
+    ) => {
+        compile_error!("please start route with slash");
+    };
+    
+    // Take a part from a route path and keep going
+
     (@path) => { "" };
+    (@path /) => {
+        compile_error!("no trailing slash please");
+    };
+    (@path
+        / / $($tt:tt)*
+    ) => {
+        compile_error!("dont do two slashes in a row");
+    };
     (@path
         / $($tt:tt)*
     ) => {
