@@ -41,9 +41,15 @@ struct Function {
 }
 
 #[derive(Debug)]
-struct Attribute {
-    name: String,
-    value: TokenStream,
+enum Attribute {
+    Pair {
+        name: String,
+        value: TokenStream,
+    },
+    Conditional {
+        name: String,
+        condition: TokenStream,
+    },
 }
 
 impl ToTokens for View {
@@ -139,20 +145,34 @@ impl ToTokens for Element {
         let mut children_tokens = TokenStream::new();
         children.to_tokens(&mut children_tokens);
 
-        let mut attributes_tokens = TokenStream::new();
-        for Attribute { name, value } in attributes {
-            attributes_tokens.extend(quote! {
-                ibex::compose::Attribute {
-                    name: #name.to_string(),
-                    value: (#value).to_string(),
-                },
-            });
+        let mut attribute_pushes = TokenStream::new();
+        for attribute in attributes {
+            match attribute {
+                Attribute::Pair { name, value } => attribute_pushes.extend(quote! {
+                    attributes.push(ibex::compose::Attribute {
+                        name: #name.to_string(),
+                        value: (#value).to_string(),
+                    });
+                }),
+                Attribute::Conditional { name, condition } => attribute_pushes.extend(quote! {
+                    if #condition {
+                        attributes.push(ibex::compose::Attribute {
+                            name: #name.to_string(),
+                            value: "true".to_string(),
+                        })
+                    };
+                }),
+            };
         }
 
         tokens.extend(quote! {
             ibex::compose::Element {
                 tag: ibex::compose::Tag::#tag,
-                attributes: vec![ #attributes_tokens ],
+                attributes: {
+                    let mut attributes = Vec::new();
+                    #attribute_pushes;
+                    attributes
+                },
                 children: #children_tokens,
             },
         });
@@ -195,10 +215,25 @@ fn parse_view(input: TokenStream) -> View {
                             let name = name.to_string();
 
                             let mut value = TokenStream::new();
+                            let mut is_conditional = false;
 
-                            if let Some(TokenTree::Punct(punct)) = group.next() {
-                                if punct.to_string() == "," {
-                                    panic!("Unexpected punctuation token `{}`. Expected value or end of attributes", punct);
+                            if let Some(TokenTree::Punct(punct)) = group.peek() {
+                                if punct.to_string() == "?" {
+                                    is_conditional = true;
+                                    group.next();
+                                }
+                            }
+
+                            match group.next() {
+                                Some(TokenTree::Punct(punct)) if punct.to_string() == "=" => (),
+                                Some(TokenTree::Punct(punct)) => {
+                                    panic!(
+                                        "Unexpected punctuation token `{}`. Expected value",
+                                        punct
+                                    );
+                                }
+                                _ => {
+                                    panic!("Unexpected end of attributes. Expected value");
                                 }
                             }
 
@@ -217,7 +252,14 @@ fn parse_view(input: TokenStream) -> View {
                                 }
                             }
 
-                            attributes.push(Attribute { name, value });
+                            attributes.push(if is_conditional {
+                                Attribute::Conditional {
+                                    name,
+                                    condition: value,
+                                }
+                            } else {
+                                Attribute::Pair { name, value }
+                            });
 
                             if let Some(TokenTree::Punct(punct)) = group.peek() {
                                 if punct.to_string() == "," {
@@ -305,7 +347,7 @@ fn parse_view(input: TokenStream) -> View {
 
                 // Special `if` and `for` statements
                 if let Some(TokenTree::Punct(punct)) = stream.peek() {
-                    if punct.to_string() == "*" {
+                    if punct.to_string() == ":" {
                         stream.next();
 
                         let Some(TokenTree::Ident(statement)) = stream.next() else {

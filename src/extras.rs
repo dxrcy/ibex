@@ -133,7 +133,7 @@ pub fn use_meta(meta: Meta) -> View {
                 meta [name="theme-color", content=color]/
             }} else { view! {}}]
 
-            [*if (meta.large_image) {
+            [:if (meta.large_image) {
                 meta [name="twitter:card", content="summary_large_image"]/
             }]
 
