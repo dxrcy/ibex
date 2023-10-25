@@ -23,7 +23,7 @@ enum Node {
     Expression(TokenStream),
     Function(Function),
     If(TokenStream, View, Option<View>),
-    For(TokenStream, TokenStream, View),
+    For(TokenStream, View),
 }
 
 #[derive(Debug)]
@@ -103,30 +103,39 @@ impl ToTokens for Node {
                 };
                 tokens.extend(quote! {ibex::compose::Node::Fragment(#call)})
             }
+            // condition should be wrapped in parenthesis, so error is not so ugly when trying to
+            // use `else-if` chains (not supported yet)
             Node::If(condition, then, otherwise) => match otherwise {
                 Some(otherwise) => tokens.extend(quote! {
-                ibex::compose::Node::Fragment(
-                    if #condition {
-                        #then
-                    } else {
-                        #otherwise
-                    }
-                )}),
+                    ibex::compose::Node::Fragment(
+                        if (#condition) {
+                            #then
+                        } else {
+                            #otherwise
+                        }
+                    )
+                }),
                 None => tokens.extend(quote! {
-                ibex::compose::Node::Fragment(
-                    if #condition {
-                        #then
-                    } else {
-                        view! {}
-                    }
-                )}),
+                    ibex::compose::Node::Fragment(
+                        if (#condition) {
+                            #then
+                        } else {
+                            view! {}
+                        }
+                    )
+                }),
             },
-            Node::For(item, source, block) => tokens.extend(quote! {
-                ibex::compose::Node::Fragment(ibex::compose::View(
-                    #source.map(|(#item)| {
-                        ibex::compose::Node::Fragment(#block)
-                    }).collect::<Vec<_>>()
-            ))}),
+            // must use `for` loop inside block, as opposed to `.map`, because `#source` is a
+            // tokenstream, which does not separate tokens before and after `in` keyword
+            Node::For(source, block) => tokens.extend(quote! {
+                ibex::compose::Node::Fragment({
+                    let mut items = Vec::new();
+                    for #source {
+                        items.push( ibex::compose::Node::Fragment(#block) );
+                    }
+                    ibex::compose::View(items)
+                })
+            }),
         }
     }
 }
@@ -355,97 +364,82 @@ fn parse_view(input: TokenStream) -> View {
                         };
                         match statement.to_string().as_str() {
                             "if" => {
-                                let condition = match stream.next() {
-                                    Some(TokenTree::Group(group))
-                                        if group.delimiter() == Delimiter::Parenthesis =>
-                                    {
-                                        group.stream()
-                                    }
-                                    _ => panic!(
-                                        "`if` statement condition must be a group with parenthesis"
-                                    ),
-                                };
+                                // reverse tokenstream to consume from end
+                                // cannot use `.rev` as TokenStream as an iterator is not
+                                // double-ended
+                                let mut stream_rev: Vec<TokenTree> = stream.collect();
+                                stream_rev.reverse();
+                                let mut stream_rev = stream_rev.into_iter().peekable();
 
-                                // if block
-                                let then = match stream.next() {
+                                // match last block
+                                // this could be the block after `if` or `else`
+                                let last_block = match stream_rev.next() {
                                     Some(TokenTree::Group(group))
                                         if group.delimiter() == Delimiter::Brace =>
                                     {
                                         parse_view(group.stream())
                                     }
-                                    _ => panic!("`if` statement block must be a group with braces"),
+                                    _ => panic!("`if` block must be group (matching last token)"),
                                 };
 
-                                // else block
-                                let otherwise = match stream.next() {
+                                // match `else` keyword before last block
+                                // if found, last block must be `else` block
+                                // otherwise, last block must be `if` block
+                                let (then, otherwise) = match stream_rev.peek() {
                                     Some(TokenTree::Ident(ident))
                                         if ident.to_string() == "else" =>
                                     {
-                                        match stream.next() {
+                                        stream_rev.next();
+                                        let then = match stream_rev.next() {
                                             Some(TokenTree::Group(group))
                                                 if group.delimiter() == Delimiter::Brace =>
                                             {
-                                                Some(parse_view(group.stream(), ))
+                                                parse_view(group.stream())
                                             }
-                                            _=> panic!(
-                                                "`if-else` statement block must be a group with braces"
-                                            ),
-                                        }
+                                            _ => panic!("`if` block must be group (matching 3rd last token)"),
+                                        };
+                                        (then, Some(last_block))
                                     }
-                                    Some(token) => panic!(
-                                        "Unexpected token `{}` after `if` statement block",
-                                        token
-                                    ),
-                                    None => None,
+                                    _ => (last_block, None),
                                 };
+
+                                // reverse back and return to tokenstream
+                                // everything before blocks matched above, is part of `if`
+                                // condition
+                                let mut condition: Vec<TokenTree> = stream_rev.collect();
+                                condition.reverse();
+                                let condition: TokenStream = condition.into_iter().collect();
 
                                 nodes.push(Node::If(condition, then, otherwise));
                             }
 
                             "for" => {
-                                // item
-                                let item = match stream.next() {
-                                    Some(TokenTree::Group(group))
-                                        if group.delimiter() == Delimiter::Parenthesis =>
-                                    {
-                                        group.stream()
-                                    }
-                                    _ => panic!(
-                                        "`for` statement item must be a group with parenthesis"
-                                    ),
-                                };
+                                // reverse tokenstream to consume from end
+                                // cannot use `.rev` as TokenStream as an iterator is not
+                                // double-ended
+                                let mut stream_rev: Vec<TokenTree> = stream.collect();
+                                stream_rev.reverse();
+                                let mut stream_rev = stream_rev.into_iter().peekable();
 
-                                // `in`
-                                match stream.next() {
-                                    Some(TokenTree::Ident(ident)) if ident.to_string() == "in" => {}
-                                    _ => panic!("`for` statement must have `in` keyword"),
-                                }
-
-                                // source
-                                let source = match stream.next() {
-                                    Some(TokenTree::Group(group))
-                                        if group.delimiter() == Delimiter::Parenthesis =>
-                                    {
-                                        group.stream()
-                                    }
-                                    _ => panic!(
-                                        "`for` statement source must be a group with parenthesis"
-                                    ),
-                                };
-
-                                // for block
-                                let block = match stream.next() {
+                                // match last block
+                                // this must be the block of the `for` loop (obviously)
+                                let block = match stream_rev.next() {
                                     Some(TokenTree::Group(group))
                                         if group.delimiter() == Delimiter::Brace =>
                                     {
                                         parse_view(group.stream())
                                     }
-                                    _ => {
-                                        panic!("`for` statement block must be a group with braces")
-                                    }
+                                    _ => panic!("`if` block must be group (matching last token)"),
                                 };
 
-                                nodes.push(Node::For(item, source, block));
+                                // reverse back and return to tokenstream
+                                // this must be the 'source' of the `for` loop (between `for` and
+                                // block)
+                                let mut source: Vec<TokenTree> = stream_rev.collect();
+                                source.reverse();
+                                let source: TokenStream = source.into_iter().collect();
+
+                                nodes.push(Node::For(source, block));
                             }
 
                             _ => panic!("Invalid statement"),
@@ -478,27 +472,3 @@ fn parse_view(input: TokenStream) -> View {
 
     View(nodes)
 }
-
-// If input is a square bracket group starting with tokens `:?`,
-//     wrap the rest of the group in a debug format
-// If not, return input string
-// fn parse_value(input: TokenStream) -> TokenStream {
-//     let mut tokens = input.clone().into_iter();
-//
-//     // (awful code)
-//     if let Some(TokenTree::Group(group)) = tokens.next() {
-//         let mut stream = group.stream().into_iter();
-//         if let Some(TokenTree::Punct(punct)) = stream.next() {
-//             if punct.to_string() == ":" {
-//                 if let Some(TokenTree::Punct(punct)) = stream.next() {
-//                     if punct.to_string() == "?" {
-//                         let rest: TokenStream = stream.collect();
-//                         return quote! { format!("{:?}", #rest) };
-//                     }
-//                 }
-//             }
-//         }
-//     }
-//
-//     input
-// }

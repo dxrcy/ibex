@@ -1,0 +1,16 @@
+# fix `if` and `for` syntax
+
+:if
+    - next back: must be group
+    - next back:
+        `else`
+            - next back: must be group
+            - rest: `if` condition
+        otherwise rest: `if` condition
+    this can be expanded to `else if` also
+
+:for
+    - next back: must be group
+    - rest: `for` expression
+
+
