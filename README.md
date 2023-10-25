@@ -27,6 +27,11 @@ fn at_blog(blog: BlogPost) -> Document {
         // Variables can be used in attributes
         // Use a slash to signify an empty element body
         img [src=blog.image]/
+
+        // Any syntax can be used with `if` or `for` statements (except `else-if`)
+        [:if let Some(image_src) = blog.image {
+            image [src=image_src]/
+        }]
     }
     .into()
 }
