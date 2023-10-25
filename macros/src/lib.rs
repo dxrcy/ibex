@@ -103,12 +103,12 @@ impl ToTokens for Node {
                 };
                 tokens.extend(quote! {ibex::compose::Node::Fragment(#call)})
             }
-            // condition should be wrapped in parenthesis, so error is not so ugly when trying to
-            // use `else-if` chains (not supported yet)
+            // conditions cannot be wrapped in brackets, because `if-let` statements will break
+            // this, however, makes errors look ugly with `else-if` chaining
             Node::If(condition, then, otherwise) => match otherwise {
                 Some(otherwise) => tokens.extend(quote! {
                     ibex::compose::Node::Fragment(
-                        if (#condition) {
+                        if #condition {
                             #then
                         } else {
                             #otherwise
@@ -117,7 +117,7 @@ impl ToTokens for Node {
                 }),
                 None => tokens.extend(quote! {
                     ibex::compose::Node::Fragment(
-                        if (#condition) {
+                        if #condition {
                             #then
                         } else {
                             view! {}
