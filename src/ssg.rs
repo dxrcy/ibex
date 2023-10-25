@@ -145,7 +145,13 @@ fn copy_folder(src: &Path, dest: &Path) -> io::Result<()> {
 }
 
 fn url_path_to_filepath(path: &str) -> String {
-    remove_leading_slash(&format!("{}/index.html", path)).to_string()
+    // 404 needs a special case, for github pages to work
+    let filepath = if path == "404" {
+        "404.html".to_string()
+    } else {
+        format!("{}/index.html", path)
+    };
+    remove_leading_slash(&filepath).to_string()
 }
 
 fn remove_leading_slash(path: &str) -> &str {
