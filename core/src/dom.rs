@@ -83,9 +83,17 @@ fn convert_node(node: Node, head: &mut DomElement) -> Vec<DomNode> {
 // Handy implementations
 // ---------------------
 
+impl View {
+    pub fn document(self) -> Document {
+        convert(self)
+    }
+    pub fn render(self) -> String {
+        self.document().render()
+    }
+}
 impl From<View> for Document {
     fn from(value: View) -> Self {
-        convert(value)
+        value.document()
     }
 }
 impl Document {
