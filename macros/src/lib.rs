@@ -24,6 +24,7 @@ enum Node {
     Function(Function),
     If(TokenStream, View, Option<View>),
     For(TokenStream, View),
+    With(TokenStream, View),
 }
 
 #[derive(Debug)]
@@ -135,6 +136,13 @@ impl ToTokens for Node {
                     }
                     ibex::compose::View(items)
                 })
+            }),
+
+            Node::With(scope, view) => tokens.extend(quote! {
+                {
+                    #scope;
+                    ibex::compose::Node::Fragment(#view)
+                }
             }),
         }
     }
@@ -396,7 +404,7 @@ fn parse_view(input: TokenStream) -> View {
                                             {
                                                 parse_view(group.stream())
                                             }
-                                            _ => panic!("`if` block must be group (matching 3rd last token)"),
+                                            _ => panic!("`if` block must be group (matching third last token)"),
                                         };
                                         (then, Some(last_block))
                                     }
@@ -440,6 +448,32 @@ fn parse_view(input: TokenStream) -> View {
                                 let source: TokenStream = source.into_iter().collect();
 
                                 nodes.push(Node::For(source, block));
+                            }
+
+                            "use" => {
+                                let scope = match stream.next() {
+                                    Some(TokenTree::Group(group))
+                                        if group.delimiter() == Delimiter::Brace =>
+                                    {
+                                        group.stream()
+                                    }
+                                    _ => {
+                                        panic!("`with` block must be group (matching first token)")
+                                    }
+                                };
+
+                                let block = match stream.next() {
+                                    Some(TokenTree::Group(group))
+                                        if group.delimiter() == Delimiter::Brace =>
+                                    {
+                                        parse_view(group.stream())
+                                    }
+                                    _ => {
+                                        panic!("`with` block must be group (matching second token)")
+                                    }
+                                };
+
+                                nodes.push(Node::With(scope, block));
                             }
 
                             _ => panic!("Invalid statement"),
