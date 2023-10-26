@@ -1,0 +1,7 @@
+MACRO
+---------------
+refactor everything
+    return result, not panic
+    
+accept `else-if` statements
+
