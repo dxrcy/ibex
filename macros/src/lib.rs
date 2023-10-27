@@ -498,6 +498,22 @@ fn parse_view(input: TokenStream) -> View {
                 nodes.push(Node::Literal(" ".to_string()));
             }
 
+            // Html entity
+            TokenTree::Punct(punct) if punct.to_string() == "&" => {
+                let code = match tokens.next() {
+                    Some(TokenTree::Ident(ident)) => ident.to_string(),
+                    _ => panic!("Expected html entity code"),
+                };
+                // optional semicolon after code
+                match tokens.peek() {
+                    Some(TokenTree::Punct(punct)) if punct.to_string() == ";" => {
+                        tokens.next();
+                    }
+                    _ => (),
+                }
+                nodes.push(Node::Literal(format!("&{};", code)));
+            }
+
             _ => {
                 panic!("Unexpected token {:#?}", token);
             }
