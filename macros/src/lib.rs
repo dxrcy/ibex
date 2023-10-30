@@ -336,7 +336,23 @@ fn parse_view(input: TokenStream) -> View {
                     Some(TokenTree::Group(group)) if group.delimiter() == Delimiter::Bracket => {
                         let arguments = group.stream();
                         tokens.next();
-                        arguments
+
+                        // Remove trailing comma
+                        // Because comma is automatically inserted between 'attribute-like params'
+                        // and 'child-like View param'
+                        // Stream is reversed, first item removed (if is comma), and reversed back
+                        let mut stream_rev: Vec<TokenTree> = arguments.into_iter().collect();
+                        stream_rev.reverse();
+                        let mut stream_rev = stream_rev.into_iter().peekable();
+                        match stream_rev.peek() {
+                            Some(TokenTree::Punct(punct)) if punct.to_string() == "," => {
+                                stream_rev.next();
+                            }
+                            _ => (),
+                        }
+                        let mut arguments: Vec<TokenTree> = stream_rev.collect();
+                        arguments.reverse();
+                        arguments.into_iter().collect()
                     }
                     _ => TokenStream::new(),
                 };
