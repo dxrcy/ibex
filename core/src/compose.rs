@@ -116,3 +116,19 @@ where
         }
     }
 }
+
+/// Implement `Into<Node>` for some select types which implement `Display` (`ToString`)
+/// Cannot use T: Display, because `Vec<T>` conflict (`Vec<T>` pseudo-implements `Display` for
+///   future-proofing)
+macro_rules! impl_with_display {
+    ( $( $ty:ty ),* ) => {
+        $(
+            impl From<$ty> for Node {
+                fn from(value: $ty) -> Self {
+                    Node::Text(value.to_string())
+                }
+            }
+        )*
+    };
+}
+impl_with_display![u8, i8, u16, i16, u32, i32, u64, i64, u128, i128, usize, isize];
