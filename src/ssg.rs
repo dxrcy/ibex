@@ -176,13 +176,13 @@ fn create_parent_folder(path: &str) -> Result<(), io::Error> {
 #[macro_export]
 macro_rules! routes {
     ( $(
-        ( $($tt:tt)* )
+        $( ($($tt:tt)*) )|*
         $( for $args:pat in $src:expr )?
         => $expr:expr
     ),* $(,)? ) => {{
         vec![ $(
             ::ibex::routes!(@one
-                ( $($tt)* )
+                $( ( $($tt)* ) )|*
                 $( for $args in $src)?
                 => $expr
             ),
@@ -192,28 +192,44 @@ macro_rules! routes {
     // A single route
 
     (@one
-        ( $($tt:tt)* )
+        $( ($($tt:tt)*) )|*
         => $expr:expr
     ) => {
-        vec![::ibex::ssg::Route::new(
-            ::ibex::routes!(@path_full $($tt)*).to_string(),
-            $expr,
-        )]
+        vec![ $(
+            ::ibex::ssg::Route::new(
+                ::ibex::routes!(@path_full $($tt)*),
+                $expr,
+            ),
+        )* ]
     };
 
     (@one
-        ( $($tt:tt)* )
+        $( ($($tt:tt)*) )|*
         for $args:pat in $src:expr
         => $expr:expr
     ) => {
         $src
-            .map(|$args|
-                ::ibex::ssg::Route::new(
-                    ::ibex::routes!(@path_full $($tt)*),
-                    $expr,
-                )
-            )
+            .into_iter()
+            .map(|$args| {
+                $( ::ibex::routes!(@check_missing_expr $($tt)*); )*;
+                ::ibex::routes!(@one $(($($tt)*))|* => $expr)
+            })
+            .flatten()
             .collect::<Vec<::ibex::ssg::Route>>()
+    };
+
+    // Check for missing expression (required for loop routes)
+
+    (@check_missing_expr
+        [$x:expr] $($tt:tt)*
+    ) => {{ }};
+    (@check_missing_expr
+        $_:tt $($tt:tt)*
+    ) => {
+        ::ibex::routes!(@check_missing_expr $($tt)*)
+    };
+    (@check_missing_expr) => {
+        compile_error!("no variables included in loop route.\nthis will use the same url path for every iteration");
     };
 
     // Resolve a full route path
@@ -221,7 +237,7 @@ macro_rules! routes {
     (@path_full
         / $($tt:tt)*
     ) => {
-        ::ibex::routes!(@path $($tt)*)
+        ::ibex::routes!(@path $($tt)*).to_string()
     };
     (@path_full
         $($tt:tt)*
