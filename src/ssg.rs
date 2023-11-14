@@ -4,19 +4,22 @@ use crate::dom::Document;
 
 #[derive(Clone, Debug)]
 pub struct Route {
-    url_path: String,
+    url_paths: Vec<String>,
     document: Document,
 }
 
 impl Route {
-    pub fn new(url_path: String, document: Document) -> Self {
-        Self { url_path, document }
+    pub fn new(url_paths: Vec<String>, document: Document) -> Self {
+        Self {
+            url_paths,
+            document,
+        }
     }
 }
 
 #[derive(Debug)]
 pub struct RouteFile {
-    path: String,
+    paths: Vec<String>,
     content: String,
 }
 
@@ -41,8 +44,14 @@ pub fn render_routes(routes: Vec<Route>) -> Vec<RouteFile> {
 }
 
 pub fn render_route(route: Route) -> RouteFile {
+    let paths = route
+        .url_paths
+        .into_iter()
+        .map(|url_path| url_path_to_filepath(&url_path))
+        .collect();
+
     RouteFile {
-        path: url_path_to_filepath(&route.url_path),
+        paths,
         content: route.document.render(),
     }
 }
@@ -54,9 +63,11 @@ pub fn write_files(files: Vec<RouteFile>) -> Result<(), io::Error> {
     fs::create_dir_all(BUILD_DIR)?;
 
     for file in files {
-        let path = format!("{BUILD_DIR}/{}", file.path);
-        create_parent_folder(&path)?;
-        fs::write(path, file.content)?;
+        for path in file.paths {
+            let path = format!("{BUILD_DIR}/{}", path);
+            create_parent_folder(&path)?;
+            fs::write(path, &file.content)?;
+        }
     }
 
     Ok(())
@@ -195,12 +206,14 @@ macro_rules! routes {
         $( ($($tt:tt)*) )|*
         => $expr:expr
     ) => {
-        vec![ $(
+        vec![
             ::ibex::ssg::Route::new(
-                ::ibex::routes!(@path_full $($tt)*),
+                vec![ $(
+                    ::ibex::routes!(@path_full $($tt)*),
+                )* ],
                 $expr,
-            ),
-        )* ]
+            )
+        ]
     };
 
     (@one
