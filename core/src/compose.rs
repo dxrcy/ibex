@@ -70,6 +70,12 @@ impl std::fmt::Display for Tag {
     }
 }
 
+impl From<View> for Node {
+    fn from(value: View) -> Self {
+        Self::Fragment(value)
+    }
+}
+
 impl From<String> for Node {
     fn from(value: String) -> Self {
         Self::Text(value)
@@ -90,21 +96,15 @@ impl From<()> for Node {
         Self::Fragment(View(vec![]))
     }
 }
-impl From<View> for Node {
-    fn from(value: View) -> Self {
-        Self::Fragment(value)
-    }
-}
 
 impl<T> From<Vec<T>> for Node
 where
     T: Into<Node>,
 {
     fn from(value: Vec<T>) -> Self {
-        Node::Fragment(View(value.into_iter().map(Into::into).collect()))
+        Self::Fragment(View(value.into_iter().map(Into::into).collect()))
     }
 }
-
 impl<T> From<Option<T>> for Node
 where
     T: Into<Node>,
@@ -112,7 +112,48 @@ where
     fn from(value: Option<T>) -> Self {
         match value {
             Some(value) => value.into(),
-            None => Node::Fragment(View(vec![])),
+            None => Self::Fragment(View(vec![])),
+        }
+    }
+}
+
+impl From<String> for View {
+    fn from(value: String) -> Self {
+        Self(vec![value.into()])
+    }
+}
+impl From<&String> for View {
+    fn from(value: &String) -> Self {
+        Self(vec![value.into()])
+    }
+}
+impl From<&str> for View {
+    fn from(value: &str) -> Self {
+        Self(vec![value.into()])
+    }
+}
+impl From<()> for View {
+    fn from(_: ()) -> Self {
+        View(vec![])
+    }
+}
+
+impl<T> From<Vec<T>> for View
+where
+    T: Into<Node>,
+{
+    fn from(value: Vec<T>) -> Self {
+        View(value.into_iter().map(Into::into).collect())
+    }
+}
+impl<T> From<Option<T>> for View
+where
+    T: Into<Node>,
+{
+    fn from(value: Option<T>) -> Self {
+        match value {
+            Some(value) => View(vec![value.into()]),
+            None => View(vec![]),
         }
     }
 }
