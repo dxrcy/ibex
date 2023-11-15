@@ -30,6 +30,8 @@ enum Node {
 #[derive(Debug)]
 struct Element {
     tag: Tag,
+    id: Option<TokenStream>,
+    class: Option<TokenStream>,
     attributes: Vec<Attribute>,
     children: View,
 }
@@ -152,6 +154,8 @@ impl ToTokens for Element {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let Element {
             tag,
+            id,
+            class,
             attributes,
             children,
         } = self;
@@ -163,6 +167,24 @@ impl ToTokens for Element {
         children.to_tokens(&mut children_tokens);
 
         let mut attribute_pushes = TokenStream::new();
+
+        if let Some(id) = id {
+            attribute_pushes.extend(quote! {
+                attributes.push(ibex::compose::Attribute {
+                    name: "id".to_string(),
+                    value: (#id).to_string(),
+                });
+            });
+        }
+        if let Some(class) = class {
+            attribute_pushes.extend(quote! {
+                attributes.push(ibex::compose::Attribute {
+                    name: "class".to_string(),
+                    value: (#class).to_string(),
+                });
+            });
+        }
+
         for attribute in attributes {
             match attribute {
                 Attribute::Pair { name, value } => attribute_pushes.extend(quote! {
@@ -217,6 +239,51 @@ fn parse_view(input: TokenStream) -> View {
                     };
                     Some(tag)
                 };
+
+                // Id and class
+                let mut id = None;
+                let mut class = None;
+                if let Some(TokenTree::Punct(punct)) = tokens.peek() {
+                    if punct.to_string() == "#" {
+                        tokens.next();
+                        let Some(token) = tokens.next() else {
+                            panic!("Expected id name");
+                        };
+                        match token {
+                            TokenTree::Literal(literal) => {
+                                id = Some(quote! { #literal });
+                            }
+                            TokenTree::Group(group) if group.delimiter() == Delimiter::Bracket => {
+                                id = Some(group.stream());
+                            }
+                            _ => panic!("Id name must be literal or group"),
+                        }
+                    }
+                }
+                if let Some(TokenTree::Punct(punct)) = tokens.peek() {
+                    if punct.to_string() == "." {
+                        tokens.next();
+                        let Some(token) = tokens.next() else {
+                            panic!("Expected class name");
+                        };
+                        match token {
+                            TokenTree::Literal(literal) => {
+                                class = Some(quote! { #literal });
+                            }
+                            TokenTree::Group(group) if group.delimiter() == Delimiter::Bracket => {
+                                class = Some(group.stream());
+                            }
+                            _ => panic!("Class name must be literal or group"),
+                        }
+                    }
+                }
+
+                // Disallow id after class
+                if let Some(TokenTree::Punct(punct)) = tokens.peek() {
+                    if punct.to_string() == "#" {
+                        panic!("Id must not come after class name");
+                    }
+                }
 
                 // Attributes
                 let mut attributes = Vec::new();
@@ -313,6 +380,8 @@ fn parse_view(input: TokenStream) -> View {
                     None => nodes.push(Node::HeadAppend(children)),
                     Some(tag) => nodes.push(Node::Element(Element {
                         tag,
+                        id,
+                        class,
                         attributes,
                         children,
                     })),
