@@ -88,6 +88,10 @@ impl From<&str> for Raw {
     }
 }
 
+pub fn raw(content: impl Into<Raw>) -> Raw {
+    content.into()
+}
+
 #[derive(Debug)]
 pub struct RouteFile {
     paths: Vec<String>,
