@@ -5,14 +5,35 @@ use crate::dom::Document;
 #[derive(Clone, Debug)]
 pub struct Route {
     url_paths: Vec<String>,
-    document: Document,
+    content: RouteContent,
 }
 
 impl Route {
-    pub fn new(url_paths: Vec<String>, document: Document) -> Self {
+    pub fn new_document(url_paths: Vec<String>, document: Document) -> Self {
         Self {
             url_paths,
-            document,
+            content: RouteContent::Document(document),
+        }
+    }
+    pub fn new_raw(url_paths: Vec<String>, content: String) -> Self {
+        Self {
+            url_paths,
+            content: RouteContent::Raw(content),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+enum RouteContent {
+    Document(Document),
+    Raw(String),
+}
+
+impl RouteContent {
+    fn render(self) -> String {
+        match self {
+            Self::Document(document) => document.render(),
+            Self::Raw(content) => content,
         }
     }
 }
@@ -52,7 +73,7 @@ pub fn render_route(route: Route) -> RouteFile {
 
     RouteFile {
         paths,
-        content: route.document.render(),
+        content: route.content.render(),
     }
 }
 
@@ -207,7 +228,7 @@ macro_rules! routes {
         => $expr:expr
     ) => {
         vec![
-            ::ibex::ssg::Route::new(
+            ::ibex::ssg::Route::new_document(
                 vec![ $(
                     ::ibex::routes!(@path_full $($tt)*),
                 )* ],
