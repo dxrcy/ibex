@@ -9,6 +9,12 @@ pub struct Route {
 }
 
 impl Route {
+    pub fn new(url_paths: Vec<String>, content: impl Into<RouteContent>) -> Self {
+        Self {
+            url_paths,
+            content: content.into(),
+        }
+    }
     pub fn new_document(url_paths: Vec<String>, document: Document) -> Self {
         Self {
             url_paths,
@@ -21,20 +27,64 @@ impl Route {
             content: RouteContent::Raw(content),
         }
     }
+    pub fn render(self) -> RouteFile {
+        let paths = self
+            .url_paths
+            .into_iter()
+            .map(|url_path| {
+                if self.content.is_document() {
+                    url_path_to_filepath(&url_path)
+                } else {
+                    url_path
+                }
+            })
+            .collect();
+
+        RouteFile {
+            paths,
+            content: self.content.render(),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
-enum RouteContent {
+pub enum RouteContent {
     Document(Document),
     Raw(String),
 }
 
 impl RouteContent {
-    fn render(self) -> String {
+    pub fn render(self) -> String {
         match self {
             Self::Document(document) => document.render(),
             Self::Raw(content) => content,
         }
+    }
+    fn is_document(&self) -> bool {
+        matches!(self, Self::Document(_))
+    }
+}
+
+impl From<Document> for RouteContent {
+    fn from(value: Document) -> Self {
+        Self::Document(value)
+    }
+}
+impl From<Raw> for RouteContent {
+    fn from(value: Raw) -> Self {
+        Self::Raw(value.0)
+    }
+}
+
+pub struct Raw(String);
+impl From<String> for Raw {
+    fn from(value: String) -> Self {
+        Self(value)
+    }
+}
+impl From<&str> for Raw {
+    fn from(value: &str) -> Self {
+        Self(value.to_string())
     }
 }
 
@@ -61,20 +111,10 @@ pub fn quick_build(routes: Vec<Route>) -> io::Result<()> {
 }
 
 pub fn render_routes(routes: Vec<Route>) -> Vec<RouteFile> {
-    routes.into_iter().map(render_route).collect()
+    routes.into_iter().map(Route::render).collect()
 }
-
 pub fn render_route(route: Route) -> RouteFile {
-    let paths = route
-        .url_paths
-        .into_iter()
-        .map(|url_path| url_path_to_filepath(&url_path))
-        .collect();
-
-    RouteFile {
-        paths,
-        content: route.content.render(),
-    }
+    route.render()
 }
 
 pub fn write_files(files: Vec<RouteFile>) -> Result<(), io::Error> {
@@ -228,7 +268,7 @@ macro_rules! routes {
         => $expr:expr
     ) => {
         vec![
-            ::ibex::ssg::Route::new_document(
+            ::ibex::ssg::Route::new(
                 vec![ $(
                     ::ibex::routes!(@path_full $($tt)*),
                 )* ],
