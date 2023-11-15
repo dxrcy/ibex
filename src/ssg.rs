@@ -82,6 +82,11 @@ impl From<String> for Raw {
         Self(value)
     }
 }
+impl From<&String> for Raw {
+    fn from(value: &String) -> Self {
+        Self(value.to_string())
+    }
+}
 impl From<&str> for Raw {
     fn from(value: &str) -> Self {
         Self(value.to_string())
