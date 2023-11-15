@@ -169,6 +169,11 @@ macro_rules! impl_with_display {
                     Node::Text(value.to_string())
                 }
             }
+            impl From<$ty> for View {
+                fn from(value: $ty) -> Self {
+                    View(vec![Node::Text(value.to_string())])
+                }
+            }
         )*
     };
 }
