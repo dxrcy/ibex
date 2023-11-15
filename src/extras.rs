@@ -26,7 +26,7 @@ macro_rules! url {
         url!(@root) + &$path
     };
     (@root) => {
-        if ::ibex::extras::is_local() { "/" } else { URL_ROOT }.to_string()
+        if ::ibex::is_local() { "/" } else { URL_ROOT }.to_string()
     };
 }
 
@@ -139,5 +139,19 @@ pub fn use_meta(meta: Meta) -> View {
 
             // meta [property="og:type", content="website"]/
         }
+    }
+}
+
+/// Wrap a child `View` in a wrapper `View`, if a condition is `true`
+pub fn wrap_if<F>(condition: bool, wrapper: F, children: View) -> View
+where
+    F: Fn(View) -> View,
+{
+    view! {
+        [:if condition {
+            @wrapper [children]
+        } else {
+            [children]
+        }]
     }
 }

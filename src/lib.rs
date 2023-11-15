@@ -1,5 +1,5 @@
 /// Some built in features
-pub mod extras;
+mod extras;
 /// Routing and file management for SSG apps
 pub mod ssg;
 
