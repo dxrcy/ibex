@@ -103,8 +103,13 @@ pub struct RouteFile {
     content: String,
 }
 
+// (re)create empty
 const BUILD_DIR: &str = "build";
+// copy/symlink
 const STATIC_DIR: &str = "static";
+// move/symlink after copy/symlink of `static`
+const STATIC_ROOT_DIR: &str = "build/static/_root";
+// recreate with converting to css
 const SCSS_DIR: &str = "src/scss";
 
 pub fn quick_build(routes: Vec<Route>) -> io::Result<()> {
@@ -146,16 +151,56 @@ pub fn write_files(files: Vec<RouteFile>) -> Result<(), io::Error> {
 pub fn copy_static() -> io::Result<()> {
     // Symlink instead of copy for development mode
     // Does not work for non-unix systems (nbd)
-    copy_or_symlink_folder(
+    copy_or_symlink_dir(
         Path::new(STATIC_DIR),
         Path::new(&format!("{BUILD_DIR}/static")),
         crate::is_local(),
-    )
+    )?;
+    if Path::new(STATIC_ROOT_DIR).exists() {
+        move_static_root()?;
+    }
+    Ok(())
 }
 
-/// Copy or symlink a folder, depending on argument
+/// Move each file and directory from 'static root' directory to build directory
+///
+/// `build/static/_root/XYZ` -> `build/XYZ`
+fn move_static_root() -> io::Result<()> {
+    let static_root = Path::new(STATIC_ROOT_DIR);
+    let build = Path::new(BUILD_DIR);
+
+    let children = fs::read_dir(static_root)?.flatten();
+    for child in children {
+        let dest_path = Path::new(build).join(child.file_name());
+        move_or_symlink_item(&child.path(), &dest_path, crate::is_local())?;
+    }
+
+    if !crate::is_local() {
+        fs::remove_dir(static_root)?;
+    }
+
+    Ok(())
+}
+
+/// Copy or symlink a file or directory, depending on argument
 #[cfg(target_family = "unix")]
-fn copy_or_symlink_folder(src: &Path, dest: &Path, do_symlink: bool) -> io::Result<()> {
+fn move_or_symlink_item(src: &Path, dest: &Path, do_symlink: bool) -> io::Result<()> {
+    if do_symlink {
+        // Source path must be absolute (or relative to BUILD_DIR, but thats worse)
+        let src = fs::canonicalize(src)?;
+        std::os::unix::fs::symlink(src, dest)
+    } else {
+        fs::rename(src, dest)
+    }
+}
+#[cfg(not(target_family = "unix"))]
+fn move_or_symlink_dir(src: &Path, dest: &Path, _do_symlink: bool) -> io::Result<()> {
+    fs::rename(src, dest)
+}
+
+/// Copy or symlink a directory, depending on argument
+#[cfg(target_family = "unix")]
+fn copy_or_symlink_dir(src: &Path, dest: &Path, do_symlink: bool) -> io::Result<()> {
     if do_symlink {
         // Source path must be absolute (or relative to BUILD_DIR, but thats worse)
         let src = fs::canonicalize(src)?;
@@ -165,7 +210,7 @@ fn copy_or_symlink_folder(src: &Path, dest: &Path, do_symlink: bool) -> io::Resu
     }
 }
 #[cfg(not(target_family = "unix"))]
-fn copy_or_symlink_folder(src: &Path, dest: &Path, _do_symlink: bool) -> io::Result<()> {
+fn copy_or_symlink_dir(src: &Path, dest: &Path, _do_symlink: bool) -> io::Result<()> {
     copy_folder(src, dest)
 }
 
