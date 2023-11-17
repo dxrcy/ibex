@@ -142,6 +142,17 @@ pub fn use_meta(meta: Meta) -> View {
     }
 }
 
+/// Construct a `Meta`, converting object-notation to builder pattern
+#[macro_export]
+macro_rules! meta {
+    { $(
+        $key:ident: $value:expr
+    ),* $(,)? } => {
+        Meta::new()
+            $( .$key($value))*
+    };
+}
+
 /// Wrap a child `View` in a wrapper `View`, if a condition is `true`
 pub fn wrap_if<F>(condition: bool, wrapper: F, children: View) -> View
 where
