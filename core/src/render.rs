@@ -26,7 +26,7 @@ pub fn render(page: Document) -> String {
 }
 
 /// Render multiple DOM nodes
-fn render_nodes(nodes: Vec<DomNode>) -> String {
+pub(super) fn render_nodes(nodes: Vec<DomNode>) -> String {
     nodes
         .into_iter()
         .map(|node| render_node(node))

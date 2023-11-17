@@ -1,5 +1,5 @@
 use crate::compose::{Attribute, Node, Tag, View};
-use crate::render::render;
+use crate::render::{render, render_nodes};
 
 /// HTML document to render to string for `.html` file
 #[derive(Clone, Debug)]
@@ -54,6 +54,18 @@ fn convert_nodes(view: View, head: &mut DomElement) -> Vec<DomNode> {
         .collect::<Vec<_>>()
         .concat()
 }
+
+/// Convert multiple nodes (as a `View`) to DOM nodes
+///
+/// Panics if any node is `HEAD`
+fn convert_nodes_headless(view: View) -> Vec<DomNode> {
+    view.0
+        .into_iter()
+        .map(|node| convert_node_headless(node))
+        .collect::<Vec<_>>()
+        .concat()
+}
+
 /// Convert a `Node` to `DomNode`s
 fn convert_node(node: Node, head: &mut DomElement) -> Vec<DomNode> {
     match node {
@@ -79,16 +91,46 @@ fn convert_node(node: Node, head: &mut DomElement) -> Vec<DomNode> {
     }
 }
 
+/// Convert a `Node` to `DomNode`s
+///
+/// Panics if any node is `HEAD`
+fn convert_node_headless(node: Node) -> Vec<DomNode> {
+    match node {
+        Node::HeadAppend(_) => panic!("Cannot use `HEAD` without rendering as `Document`"),
+
+        // Recursively convert `Element` to `DomElement`
+        Node::Element(element) => vec![DomNode::Element(DomElement {
+            tag: element.tag,
+            attributes: element.attributes,
+            children: convert_nodes_headless(element.children),
+        })],
+
+        Node::Fragment(view) => convert_nodes_headless(view),
+        Node::Text(text) => vec![DomNode::Text(text)],
+    }
+}
+
 // ---------------------
 // Handy implementations
 // ---------------------
 
 impl View {
+    /// Convert to a `Document`
     pub fn document(self) -> Document {
         convert(self)
     }
-    pub fn render(self) -> String {
+    /// Convert to a `Document` and render to HTML file
+    pub fn render_document(self) -> String {
         self.document().render()
+    }
+
+    /// Render nodes as string, without converting to `Document`
+    ///
+    /// Does not include `body`, `head`, or `html` tags.
+    /// This only renders the view
+    pub fn render_orphan(self) -> String {
+        let nodes = convert_nodes_headless(self);
+        render_nodes(nodes)
     }
 }
 impl From<View> for Document {
