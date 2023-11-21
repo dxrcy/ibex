@@ -527,30 +527,32 @@ pub fn parse_view(input: TokenStream) -> View {
                                 nodes.push(Node::For(source, block));
                             }
 
-                            "use" => {
-                                let scope = match stream.next() {
-                                    Some(TokenTree::Group(group))
-                                        if group.delimiter() == Delimiter::Brace =>
-                                    {
-                                        group.stream()
-                                    }
-                                    _ => {
-                                        panic!("`with` block must be group (matching first token)")
-                                    }
-                                };
+                            "where" => {
+                                // reverse tokenstream to consume from end
+                                // cannot use `.rev` as TokenStream as an iterator is not
+                                // double-ended
+                                let mut stream_rev: Vec<TokenTree> = stream.collect();
+                                stream_rev.reverse();
+                                let mut stream_rev = stream_rev.into_iter().peekable();
 
-                                let block = match stream.next() {
+                                // match last block
+                                // this must be the block of the `where` statement (obviously)
+                                let block = match stream_rev.next() {
                                     Some(TokenTree::Group(group))
                                         if group.delimiter() == Delimiter::Brace =>
                                     {
                                         parse_view(group.stream())
                                     }
-                                    _ => {
-                                        panic!("`with` block must be group (matching second token)")
-                                    }
+                                    _ => panic!("`where` block must be group (matching last token)"),
                                 };
 
-                                nodes.push(Node::With(scope, block));
+                                // reverse back and return to tokenstream
+                                // this is the `let` statements for the `where` statement
+                                let mut statements: Vec<TokenTree> = stream_rev.collect();
+                                statements.reverse();
+                                let statements: TokenStream = statements.into_iter().collect();
+
+                                nodes.push(Node::With(statements, block));
                             }
 
                             _ => panic!("Invalid statement"),
