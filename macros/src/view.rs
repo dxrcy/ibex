@@ -579,7 +579,12 @@ pub fn parse_view(input: TokenStream) -> View {
             TokenTree::Punct(punct) if punct.to_string() == "&" => {
                 let code = match tokens.next() {
                     Some(TokenTree::Ident(ident)) => ident.to_string(),
-                    _ => panic!("Expected html entity code"),
+                    Some(TokenTree::Literal(literal))
+                        if literal.to_string().parse::<i32>().is_ok() =>
+                    {
+                        literal.to_string()
+                    }
+                    _ => panic!("Expected html entity code, as ident or codepoint integer literal"),
                 };
                 // optional semicolon after code
                 match tokens.peek() {
