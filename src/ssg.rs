@@ -1,4 +1,8 @@
-use std::{fs, io, path::Path};
+use std::{
+    fs, io,
+    path::Path,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use crate::dom::Document;
 
@@ -121,7 +125,18 @@ pub fn quick_build(routes: Vec<Route>) -> io::Result<()> {
     if Path::new(SCSS_DIR).exists() {
         convert_scss()?;
     }
+    write_build_timestamp()?;
     Ok(())
+}
+
+pub fn write_build_timestamp() -> Result<(), io::Error> {
+    let path = format!("{BUILD_DIR}/__timestamp");
+    let current_time = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs()
+        .to_string();
+    fs::write(path, current_time)
 }
 
 pub fn render_routes(routes: Vec<Route>) -> Vec<RouteFile> {
