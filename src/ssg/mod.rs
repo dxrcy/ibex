@@ -4,7 +4,16 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use crate::dom::Document;
+use crate::{compose::View, dom::Document};
+
+pub fn use_autoreload() -> View {
+    const AUTORELOAD_SCRIPT: &str = include_str!("autoreload.html");
+    if crate::is_local() {
+        AUTORELOAD_SCRIPT.into()
+    } else {
+        View(vec![])
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct Route {
