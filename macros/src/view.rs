@@ -30,7 +30,7 @@ struct Element {
 
 #[derive(Debug)]
 struct Function {
-    name: String,
+    name: TokenStream,
     arguments: TokenStream,
     children: Option<View>,
 }
@@ -83,7 +83,7 @@ impl ToTokens for Node {
                 children,
             }) => {
                 // Convert string of ident into ident
-                let name = quote::format_ident!("{}", format!("{}", name));
+                // let name = quote::format_ident!("{}", format!("{}", name));
                 let call = match children {
                     Some(children) => {
                         if arguments.is_empty() {
@@ -388,10 +388,53 @@ pub fn parse_view(input: TokenStream) -> View {
             },
 
             TokenTree::Punct(punct) if punct.to_string() == "@" => {
-                let Some(TokenTree::Ident(name)) = tokens.next() else {
-                    panic!("Missing name for node function");
-                };
-                let name = name.to_string();
+                enum PrevToken {
+                    Nothing,
+                    Ident,
+                    FirstColon,
+                    SecondColon,
+                }
+
+                let mut name = TokenStream::new();
+                let mut prev_token = PrevToken::Nothing;
+                while let Some(token) = tokens.peek() {
+                    match token {
+                        TokenTree::Ident(ident) => match prev_token {
+                            PrevToken::Nothing => {
+                                name.extend(quote! { #ident });
+                                prev_token = PrevToken::Ident;
+                                tokens.next();
+                            }
+                            PrevToken::Ident => break,
+                            PrevToken::FirstColon => {
+                                panic!("please use two colons please");
+                            }
+                            PrevToken::SecondColon => {
+                                name.extend(quote! { :: #ident });
+                                prev_token = PrevToken::Ident;
+                                tokens.next();
+                            }
+                        },
+
+                        TokenTree::Punct(punct) if punct.to_string() == ":" => match prev_token {
+                            PrevToken::Nothing => {
+                                name.extend(quote! { :: });
+                                prev_token = PrevToken::SecondColon;
+                                tokens.next();
+                            }
+                            PrevToken::Ident => {
+                                prev_token = PrevToken::FirstColon;
+                                tokens.next();
+                            }
+                            PrevToken::FirstColon => {
+                                prev_token = PrevToken::SecondColon;
+                                tokens.next();
+                            }
+                            PrevToken::SecondColon => break,
+                        },
+                        _ => break,
+                    }
+                }
 
                 let arguments = match tokens.peek() {
                     Some(TokenTree::Group(group)) if group.delimiter() == Delimiter::Bracket => {
@@ -543,7 +586,9 @@ pub fn parse_view(input: TokenStream) -> View {
                                     {
                                         parse_view(group.stream())
                                     }
-                                    _ => panic!("`where` block must be group (matching last token)"),
+                                    _ => {
+                                        panic!("`where` block must be group (matching last token)")
+                                    }
                                 };
 
                                 // reverse back and return to tokenstream
