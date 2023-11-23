@@ -11,7 +11,7 @@ pub fn use_autoreload() -> View {
     if crate::is_local() {
         AUTORELOAD_SCRIPT.into()
     } else {
-        View(vec![])
+        View::new()
     }
 }
 

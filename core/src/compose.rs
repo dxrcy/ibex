@@ -1,5 +1,5 @@
 /// List of component nodes
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct View(pub Vec<Node>);
 
 /// Abstract component node
@@ -155,6 +155,16 @@ where
             Some(value) => View(vec![value.into()]),
             None => View(vec![]),
         }
+    }
+}
+
+impl View {
+    pub fn new() -> Self {
+        Self(Vec::new())
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
     }
 }
 
