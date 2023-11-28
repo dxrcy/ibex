@@ -456,9 +456,9 @@ pub fn parse_view(input: TokenStream) -> View {
                         }
                         let mut arguments: Vec<TokenTree> = stream_rev.collect();
                         arguments.reverse();
-                        arguments.into_iter().collect()
+                        Some(arguments.into_iter().collect())
                     }
-                    _ => TokenStream::new(),
+                    _ => None,
                 };
 
                 // Peek next token, don't consume unless matched
@@ -470,6 +470,17 @@ pub fn parse_view(input: TokenStream) -> View {
                         children
                     }
                     _ => None,
+                };
+
+                let arguments = match arguments {
+                    Some(arguments) => arguments,
+                    None => {
+                        if children.is_some() {
+                            TokenStream::new()
+                        } else {
+                            panic!("function call must include argument group (even empty), if does not children");
+                        }
+                    }
                 };
 
                 nodes.push(Node::Function(Function {
