@@ -96,7 +96,7 @@ impl ToTokens for Node {
                         quote! { #name(#arguments) }
                     }
                 };
-                tokens.extend(quote! {ibex::compose::Node::Fragment(#call)})
+                tokens.extend(quote! {ibex::compose::Node::Fragment(#call.into())})
             }
             // conditions cannot be wrapped in brackets, because `if-let` statements will break
             // this, however, makes errors look ugly with `else-if` chaining
@@ -474,12 +474,10 @@ pub fn parse_view(input: TokenStream) -> View {
 
                 let arguments = match arguments {
                     Some(arguments) => arguments,
-                    None => {
-                        if children.is_some() {
-                            TokenStream::new()
-                        } else {
-                            panic!("function call must include argument group (even empty), if does not children");
-                        }
+                    None => if children.is_some() {
+                        TokenStream::new()
+                    } else {
+                        panic!("function call must include argument group (even empty), if does not children");
                     }
                 };
 
