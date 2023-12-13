@@ -65,7 +65,7 @@ impl ToTokens for Node {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         match self {
             Node::HeadAppend(view) => {
-                tokens.extend(quote! { ibex::compose::Node::HeadAppend(#view.into) })
+                tokens.extend(quote! { ibex::compose::Node::HeadAppend(#view.into()) })
             }
             Node::Element(element) => {
                 tokens.extend(quote! { ibex::compose::Node::Element(#element) })
