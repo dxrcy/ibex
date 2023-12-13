@@ -65,7 +65,7 @@ impl ToTokens for Node {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         match self {
             Node::HeadAppend(view) => {
-                tokens.extend(quote! { ibex::compose::Node::HeadAppend(#view) })
+                tokens.extend(quote! { ibex::compose::Node::HeadAppend(#view.into) })
             }
             Node::Element(element) => {
                 tokens.extend(quote! { ibex::compose::Node::Element(#element) })
@@ -474,10 +474,12 @@ pub fn parse_view(input: TokenStream) -> View {
 
                 let arguments = match arguments {
                     Some(arguments) => arguments,
-                    None => if children.is_some() {
-                        TokenStream::new()
-                    } else {
-                        panic!("function call must include argument group (even empty), if does not children");
+                    None => {
+                        if children.is_some() {
+                            TokenStream::new()
+                        } else {
+                            panic!("function call must include argument group (even empty), if does not children");
+                        }
                     }
                 };
 
