@@ -91,6 +91,16 @@ impl From<&str> for Node {
         Self::Text(value.to_string())
     }
 }
+impl From<char> for Node {
+    fn from(value: char) -> Self {
+        Self::Text(value.to_string())
+    }
+}
+impl From<&char> for Node {
+    fn from(value: &char) -> Self {
+        Self::Text(value.to_string())
+    }
+}
 impl From<()> for Node {
     fn from(_: ()) -> Self {
         Self::Fragment(View(vec![]))
