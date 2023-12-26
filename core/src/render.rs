@@ -61,9 +61,10 @@ fn render_element_self_closing(element: DomElement) -> String {
         panic!("Cannot use children on <{}/> tag", element.tag);
     }
     format!(
-        "<{tag}{attrs}/>",
+        "<{tag}{attrs}{slash}>",
         tag = element.tag,
         attrs = format_attributes(element.attributes),
+        slash = if element.tag.is_void() { "" } else { "/" },
     )
 }
 /// Render an element with tag that supports innerHTML. Eg. `<a>...</a>`
