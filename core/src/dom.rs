@@ -4,6 +4,8 @@ use crate::render::{render, render_nodes};
 /// HTML document to render to string for `.html` file
 #[derive(Clone, Debug)]
 pub struct Document {
+    /// <html lang="...">
+    pub(super) lang: Option<String>,
     /// <head>
     pub(super) head: DomElement,
     /// <body>
@@ -28,7 +30,7 @@ pub(super) struct DomElement {
 }
 
 /// Convert a `View` to a `Document`
-pub fn convert(view: View) -> Document {
+pub fn convert(view: View, lang: Option<String>) -> Document {
     // Empty <head> to push elements onto
     let mut head = DomElement {
         tag: Tag::Head,
@@ -43,7 +45,7 @@ pub fn convert(view: View) -> Document {
         children: convert_nodes(view, &mut head),
     };
 
-    Document { head, body }
+    Document { lang, head, body }
 }
 
 /// Convert multiple nodes (as a `View`) to DOM nodes
@@ -116,12 +118,12 @@ fn convert_node_headless(node: Node) -> Vec<DomNode> {
 
 impl View {
     /// Convert to a `Document`
-    pub fn document(self) -> Document {
-        convert(self)
+    pub fn document(self, lang: impl Into<String>) -> Document {
+        convert(self, Some(lang.into()))
     }
-    /// Convert to a `Document` and render to HTML file
-    pub fn render_document(self) -> String {
-        self.document().render()
+    /// Convert to a `Document`, without any language
+    pub fn document_no_lang(self) -> Document {
+        convert(self, None)
     }
 
     /// Render nodes as string, without converting to `Document`
@@ -135,7 +137,7 @@ impl View {
 }
 impl From<View> for Document {
     fn from(value: View) -> Self {
-        value.document()
+        value.document_no_lang()
     }
 }
 impl Document {

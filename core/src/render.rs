@@ -10,7 +10,7 @@ pub fn render(page: Document) -> String {
     format!(
         concat!(
             r"<!DOCTYPE html>",
-            r"<html>",
+            r"<html{lang}>",
             r"<head>",
             r"{}",
             r"</head>",
@@ -22,6 +22,10 @@ pub fn render(page: Document) -> String {
         // ignores attributes!
         render_nodes(page.head.children),
         render_nodes(page.body.children),
+        lang = match page.lang {
+            Some(lang) => format!(" lang=\"{}\"", lang),
+            None => "".to_string(),
+        },
     )
 }
 

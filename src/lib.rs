@@ -5,7 +5,7 @@ pub mod ssg;
 
 pub use core::*;
 pub use extras::{is_local, use_meta, Meta};
-pub use macros::view;
+pub use macros::{view, document};
 
 pub mod prelude {
     pub use core::{
@@ -13,7 +13,7 @@ pub mod prelude {
         dom::Document,
     };
 
-    pub use macros::view;
+    pub use macros::{document, view};
 
     pub use crate::extras::{is_local, use_meta, Meta};
     pub use crate::url;
