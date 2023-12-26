@@ -106,23 +106,23 @@ pub fn use_meta(meta: Meta) -> View {
             }} else { view! {}}]
 
             [if let Some(title) = meta.title { view!{
-                meta [itemprop="name",     content=title]/
                 meta [property="og:title", content=title]/
                 meta [name="title",        content=title]/
+                // meta [itemprop="name",     content=title]/
             }} else { view! {}}]
 
             [if let Some(desc) = meta.desc{ view!{
                 meta [name="description",         content=desc]/
-                meta [itemprop="description",     content=desc]/
                 meta [property="og:description",  content=desc]/
                 meta [name="twitter:description", content=desc]/
+                // meta [itemprop="description",     content=desc]/
             }} else { view! {}}]
 
             [if let Some(image) = meta.image { view!{
                 meta [name="image",         content=image]/
-                meta [itemprop="image",     content=image]/
                 meta [property="og:image",  content=image]/
                 meta [name="twitter:image", content=image]/
+                // meta [itemprop="image",     content=image]/
             }} else { view! {}}]
 
             [if let Some(author) = meta.author { view!{
