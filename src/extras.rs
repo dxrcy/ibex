@@ -11,12 +11,15 @@ pub fn is_local() -> bool {
 /// Returns the input appended to `URL_ROOT`
 ///
 /// Note that `URL_ROOT`:
-///  - Must be defined
-///  - Must be in scope where macro is called
-///  - Should BEGIN and END with a slash. Eg. `const URL_ROOT: &str = "/example-site/"`
+///  - Must be defined **in the root of the crate** (`crate::URL_ROOT`)
+///  - Should BEGIN and END with a slash. Eg. `const URL_ROOT: &str = "/my-site/"`
 ///  - May be `"/"` (same as development) for sites hosted at root URL path
 ///
 /// This macro will always resolve to a `String`
+///
+/// The 'url root path' is used for when a site is not hosted at the root of the domain (Eg.
+/// `https://example.com`), but at a sub-path (Eg. `https://example.com/my-site`).
+/// This is very useful for hosting on GitHub Pages
 #[macro_export]
 macro_rules! url {
     () => {
@@ -26,7 +29,7 @@ macro_rules! url {
         url!(@root) + &$path
     };
     (@root) => {
-        if ::ibex::is_local() { "/" } else { URL_ROOT }.to_string()
+        if ::ibex::is_local() { "/" } else { crate::URL_ROOT }.to_string()
     };
 }
 
