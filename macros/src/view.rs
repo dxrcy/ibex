@@ -220,7 +220,7 @@ pub fn parse_view(input: TokenStream) -> View {
             TokenTree::Ident(ident) => {
                 let tag = ident.to_string();
 
-                let tag = if tag == "HEAD" {
+                let tag: Option<Tag> = if tag == "HEAD" {
                     if !nodes.is_empty() {
                         panic!("HEAD must be first element in group");
                     }
@@ -370,6 +370,12 @@ pub fn parse_view(input: TokenStream) -> View {
                     TokenTree::Group(group) => {
                         if group.delimiter() != Delimiter::Brace {
                             panic!("Group must have braces: {{...}}");
+                        }
+
+                        if let Some(tag) = tag {
+                            if tag.is_void() {
+                                panic!("Void tag <{}> cannot contain children. Use `/` to close.", tag);
+                            }
                         }
 
                         parse_view(group.stream())
