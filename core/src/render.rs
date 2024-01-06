@@ -86,7 +86,14 @@ fn format_attributes(attributes: Vec<Attribute>) -> String {
     " ".to_string()
         + &attributes
             .into_iter()
-            .map(|attribute| attribute.name + "=\"" + &attribute.value + "\"")
+            .map(format_attribute_value)
             .collect::<Vec<_>>()
             .join(" ")
+}
+
+fn format_attribute_value(attribute: Attribute) -> String {
+    match attribute.value {
+        Some(value) => attribute.name + "=\"" + &value + "\"",
+        None => attribute.name,
+    }
 }

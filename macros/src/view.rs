@@ -164,7 +164,7 @@ impl ToTokens for Element {
             attribute_pushes.extend(quote! {
                 attributes.push(ibex::compose::Attribute {
                     name: "id".to_string(),
-                    value: (#id).to_string(),
+                    value: Some((#id).to_string()),
                 });
             });
         }
@@ -172,7 +172,7 @@ impl ToTokens for Element {
             attribute_pushes.extend(quote! {
                 attributes.push(ibex::compose::Attribute {
                     name: "class".to_string(),
-                    value: (#class).to_string(),
+                    value: Some((#class).to_string()),
                 });
             });
         }
@@ -182,14 +182,14 @@ impl ToTokens for Element {
                 Attribute::Pair { name, value } => attribute_pushes.extend(quote! {
                     attributes.push(ibex::compose::Attribute {
                         name: #name.to_string(),
-                        value: (#value).to_string(),
+                        value: Some((#value).to_string()),
                     });
                 }),
                 Attribute::Conditional { name, condition } => attribute_pushes.extend(quote! {
                     if #condition {
                         attributes.push(ibex::compose::Attribute {
                             name: #name.to_string(),
-                            value: "true".to_string(),
+                            value: None,
                         })
                     };
                 }),

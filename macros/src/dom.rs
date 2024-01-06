@@ -24,7 +24,7 @@ pub fn parse_document(input: TokenStream) -> Document {
 
             match tokens.next() {
                 Some(TokenTree::Ident(ident)) if ident.to_string() == "lang" => (),
-                token => panic!("Expected attribute name `lang`, found {:#?}", token),
+                token => panic!("Expected attribute name `lang`, found {:#?}. Note: Currently, only `lang` attribute is supported for <html> tag", token),
             }
             match tokens.next() {
                 Some(TokenTree::Punct(punct)) if punct.to_string() == "=" => (),
