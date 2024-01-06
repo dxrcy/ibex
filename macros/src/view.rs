@@ -293,49 +293,61 @@ pub fn parse_view(input: TokenStream) -> View {
                             let mut value = TokenStream::new();
                             let mut is_conditional = false;
 
-                            if let Some(TokenTree::Punct(punct)) = group.peek() {
-                                if punct.to_string() == "?" {
+                            if matches!(group.peek(), Some(TokenTree::Punct(punct)) if punct.to_string() == "!")
+                            {
+                                // always `true` no-value attribute
+                                // same as `name?=true` (conditional with literal)
+                                group.next();
+                                attributes.push(Attribute::Conditional {
+                                    name,
+                                    condition: quote!(true),
+                                });
+                            } else {
+                                if matches!(group.peek(), Some(TokenTree::Punct(punct)) if punct.to_string() == "?")
+                                {
                                     is_conditional = true;
                                     group.next();
                                 }
-                            }
 
-                            match group.next() {
-                                Some(TokenTree::Punct(punct)) if punct.to_string() == "=" => (),
-                                Some(TokenTree::Punct(punct)) => {
-                                    panic!(
-                                        "Unexpected punctuation token `{}`. Expected value",
-                                        punct
-                                    );
-                                }
-                                _ => {
-                                    panic!("Unexpected end of attributes. Expected value");
-                                }
-                            }
-
-                            loop {
-                                let next = group.peek();
-                                match next {
-                                    Some(TokenTree::Punct(punct)) if punct.to_string() == "," => {
-                                        group.next();
-                                        break;
+                                match group.next() {
+                                    Some(TokenTree::Punct(punct)) if punct.to_string() == "=" => {}
+                                    Some(TokenTree::Punct(punct)) => {
+                                        panic!(
+                                            "Unexpected punctuation token `{}`. Expected value",
+                                            punct
+                                        );
                                     }
-                                    None => break,
-                                    Some(token) => {
-                                        value.extend(token.to_token_stream());
-                                        group.next();
+                                    _ => {
+                                        panic!("Unexpected end of attributes. Expected value");
                                     }
                                 }
-                            }
 
-                            attributes.push(if is_conditional {
-                                Attribute::Conditional {
-                                    name,
-                                    condition: value,
+                                loop {
+                                    let next = group.peek();
+                                    match next {
+                                        Some(TokenTree::Punct(punct))
+                                            if punct.to_string() == "," =>
+                                        {
+                                            group.next();
+                                            break;
+                                        }
+                                        None => break,
+                                        Some(token) => {
+                                            value.extend(token.to_token_stream());
+                                            group.next();
+                                        }
+                                    }
                                 }
-                            } else {
-                                Attribute::Pair { name, value }
-                            });
+
+                                attributes.push(if is_conditional {
+                                    Attribute::Conditional {
+                                        name,
+                                        condition: value,
+                                    }
+                                } else {
+                                    Attribute::Pair { name, value }
+                                });
+                            }
 
                             if let Some(TokenTree::Punct(punct)) = group.peek() {
                                 if punct.to_string() == "," {
