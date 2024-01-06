@@ -21,6 +21,7 @@ pub fn is_local() -> bool {
 /// `https://example.com`), but at a sub-path (Eg. `https://example.com/my-site`).
 /// This is very useful for hosting on GitHub Pages
 #[macro_export]
+#[allow(clippy::crate_in_macro_def)]
 macro_rules! url {
     () => {
         url!(@root)

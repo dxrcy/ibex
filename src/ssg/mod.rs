@@ -266,7 +266,7 @@ fn convert_scss_folder(src: &Path, dest: &Path) -> io::Result<()> {
 }
 
 fn replace_scss_extension(filename: &str) -> String {
-    let mut split: Vec<_> = filename.split(".").collect();
+    let mut split: Vec<_> = filename.split('.').collect();
     if split.last() == Some(&"scss") {
         split.pop();
         split.join(".") + ".css"
@@ -316,7 +316,7 @@ fn create_parent_folder(path: &str) -> Result<(), io::Error> {
     let mut path = path.split('/');
     path.next_back();
     let path: Vec<_> = path.collect();
-    if path.len() < 1 {
+    if path.is_empty() {
         return Ok(());
     }
     fs::create_dir_all(path.join("/"))
