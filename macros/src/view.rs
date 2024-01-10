@@ -2,7 +2,7 @@ use proc_macro2::{Delimiter, TokenStream, TokenTree};
 use quote::{quote, ToTokens};
 use syn::Lit;
 
-use core::compose::Tag;
+use ibex_core::compose::Tag;
 
 #[derive(Debug)]
 pub struct View(Vec<Node>);

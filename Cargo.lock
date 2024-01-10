@@ -113,10 +113,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "acbf1af155f9b9ef647e42cdc158db4b64a1b61f743629225fde6f3e0be2a7c7"
 
 [[package]]
-name = "core"
-version = "0.1.0"
-
-[[package]]
 name = "getrandom"
 version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -170,10 +166,24 @@ checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
 name = "ibex"
 version = "0.1.0"
 dependencies = [
- "core",
  "grass",
- "macros",
+ "ibex_core",
+ "ibex_macros",
  "symlink",
+]
+
+[[package]]
+name = "ibex_core"
+version = "0.1.0"
+
+[[package]]
+name = "ibex_macros"
+version = "0.1.0"
+dependencies = [
+ "ibex_core",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.38",
 ]
 
 [[package]]
@@ -200,16 +210,6 @@ name = "libc"
 version = "0.2.149"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a08173bc88b7955d1b3145aa561539096c421ac8debde8cbc3612ec635fee29b"
-
-[[package]]
-name = "macros"
-version = "0.1.0"
-dependencies = [
- "core",
- "proc-macro2",
- "quote",
- "syn 2.0.38",
-]
 
 [[package]]
 name = "once_cell"
