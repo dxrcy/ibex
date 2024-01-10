@@ -1,20 +1,2 @@
-[package]
-name = "ibex"
-version = "0.1.0"
-edition = "2021"
-description = "Ergonomic HTML templating in Rust for SSG/SSR"
-license = "MIT"
-documentation = "https://docs.rs/ibex/latest/ibex"
-repository = "https://github.com/darccyy/ibex"
-authors = ["darcy"]
-keywords = ["html", "templating", "ssg", "web", "macro"]
-exclude = ["target"]
-
-[dependencies]
-core = { path = "./core", version = "0.1.0" }
-macros = { path = "./macros", version = "0.1.0" }
-grass = "0.13.1"
-symlink = "0.1.0"
-
-# [features]
-# macros = ["dep:macros"]
+[workspace]
+members = ["main", "core", "macros"]
