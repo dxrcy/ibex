@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-core = { path = "./core" }
-macros = { path = "./macros" }
+core = { path = "./core", version = "0.1.0" }
+macros = { path = "./macros", version = "0.1.0" }
 grass = "0.13.1"
 symlink = "0.1.0"
 
