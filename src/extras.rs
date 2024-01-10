@@ -152,6 +152,7 @@ macro_rules! meta {
     { $(
         $key:ident: $value:expr
     ),* $(,)? } => {
+        // this *should* be method chaining, *not* normal struct definition.
         Meta::new()
             $( .$key($value))*
     };
