@@ -33,7 +33,7 @@ pub fn render(page: Document) -> String {
 pub(super) fn render_nodes(nodes: Vec<DomNode>) -> String {
     nodes
         .into_iter()
-        .map(|node| render_node(node))
+        .map(render_node)
         .collect::<Vec<_>>()
         .join("")
 }

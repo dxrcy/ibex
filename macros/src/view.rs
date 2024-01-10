@@ -544,7 +544,7 @@ pub fn parse_view(input: TokenStream) -> View {
                                 // otherwise, last block must be `if` block
                                 let (then, otherwise) = match stream_rev.peek() {
                                     Some(TokenTree::Ident(ident))
-                                        if ident.to_string() == "else" =>
+                                        if ident == "else" =>
                                     {
                                         stream_rev.next();
                                         let then = match stream_rev.next() {

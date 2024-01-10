@@ -63,7 +63,7 @@ fn convert_nodes(view: View, head: &mut DomElement) -> Vec<DomNode> {
 fn convert_nodes_headless(view: View) -> Vec<DomNode> {
     view.0
         .into_iter()
-        .map(|node| convert_node_headless(node))
+        .map(convert_node_headless)
         .collect::<Vec<_>>()
         .concat()
 }

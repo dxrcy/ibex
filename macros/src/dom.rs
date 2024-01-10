@@ -23,7 +23,7 @@ pub fn parse_document(input: TokenStream) -> Document {
             let mut tokens = group.stream().into_iter();
 
             match tokens.next() {
-                Some(TokenTree::Ident(ident)) if ident.to_string() == "lang" => (),
+                Some(TokenTree::Ident(ident)) if ident == "lang" => (),
                 token => panic!("Expected attribute name `lang`, found {:#?}. Note: Currently, only `lang` attribute is supported for <html> tag", token),
             }
             match tokens.next() {

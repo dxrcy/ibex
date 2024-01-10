@@ -29,10 +29,10 @@ macro_rules! define_tag {
             $ident,
         )* }
 
-        impl Into<&'static str> for Tag {
-            fn into(self) -> &'static str {
-                match self {
-                    $( Self::$ident => $str,)*
+        impl From<Tag> for &'static str {
+            fn from(value: Tag) -> &'static str {
+                match value {
+                    $( Tag::$ident => $str,)*
                 }
             }
         }
@@ -60,11 +60,10 @@ impl Tag {
     ///     - `<div/>` - Not a void element
     pub fn is_void(&self) -> bool {
         use Tag::*;
-        match self {
-            Base | Br | Col | Embed | Hr | Img | Input | Link | Meta | Param | Source | Track
-            | Wbr => true,
-            _ => false,
-        }
+        matches!(
+            self,
+            Base | Br | Col | Embed | Hr | Img | Input | Link | Meta | Param | Source | Track | Wbr
+        )
     }
 }
 
