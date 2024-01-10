@@ -2,6 +2,12 @@
 name = "ibex_macros"
 version = "0.1.0"
 edition = "2021"
+description = "Macros for Ibex templating"
+license = "MIT"
+documentation = "https://docs.rs/ibex/latest/ibex"
+repository = "https://github.com/darccyy/ibex"
+authors = ["darcy"]
+keywords = ["html", "templating", "ssg", "web", "macro"]
 
 [lib]
 proc_macro = true
