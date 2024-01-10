@@ -2,6 +2,13 @@
 name = "ibex"
 version = "0.1.0"
 edition = "2021"
+description = "Ergonomic HTML templating in Rust for SSG/SSR"
+license = "MIT"
+documentation = "https://docs.rs/ibex/latest/ibex"
+repository = "https://github.com/darccyy/ibex"
+authors = ["darcy"]
+keywords = ["html", "templating", "ssg", "web", "macro"]
+exclude = ["target"]
 
 [dependencies]
 core = { path = "./core", version = "0.1.0" }
