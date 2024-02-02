@@ -4,7 +4,7 @@ Ibex provides ergonomic HTML templating in Rust for SSG/SSR, using procedural ma
 
 Still a work in progress.
 
-Check out [Ibex Template](https://github.com/darccyy/ibex-template) for a quick start.
+Check out [Ibex Template](https://github.com/dxrcy/ibex-template) for a quick start.
 
 ## Example
 
