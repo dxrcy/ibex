@@ -208,7 +208,11 @@ fn move_static_root() -> io::Result<()> {
 
 /// Copy or symlink a file or directory, depending on argument
 #[cfg(target_family = "unix")]
-fn move_or_symlink_item(src: &Path, dest: &Path, do_symlink: bool) -> io::Result<()> {
+fn move_or_symlink_item(
+    src: impl AsRef<Path>,
+    dest: impl AsRef<Path>,
+    do_symlink: bool,
+) -> io::Result<()> {
     if do_symlink {
         // Source path must be absolute (or relative to BUILD_DIR, but thats worse)
         let src = fs::canonicalize(src)?;
@@ -218,23 +222,35 @@ fn move_or_symlink_item(src: &Path, dest: &Path, do_symlink: bool) -> io::Result
     }
 }
 #[cfg(not(target_family = "unix"))]
-fn move_or_symlink_dir(src: &Path, dest: &Path, _do_symlink: bool) -> io::Result<()> {
+fn move_or_symlink_dir(
+    src: impl AsRef<Path>,
+    dest: impl AsRef<Path>,
+    _do_symlink: bool,
+) -> io::Result<()> {
     fs::rename(src, dest)
 }
 
 /// Copy or symlink a directory, depending on argument
 #[cfg(target_family = "unix")]
-fn copy_or_symlink_dir(src: &Path, dest: &Path, do_symlink: bool) -> io::Result<()> {
+pub fn copy_or_symlink_dir(
+    src: impl AsRef<Path>,
+    dest: impl AsRef<Path>,
+    do_symlink: bool,
+) -> io::Result<()> {
     if do_symlink {
         // Source path must be absolute (or relative to BUILD_DIR, but thats worse)
         let src = fs::canonicalize(src)?;
         std::os::unix::fs::symlink(src, dest)
     } else {
-        copy_folder(src, dest)
+        copy_folder(src.as_ref(), dest.as_ref())
     }
 }
 #[cfg(not(target_family = "unix"))]
-fn copy_or_symlink_dir(src: &Path, dest: &Path, _do_symlink: bool) -> io::Result<()> {
+pub fn copy_or_symlink_dir(
+    src: impl AsRef<Path>,
+    dest: impl AsRef<Path>,
+    _do_symlink: bool,
+) -> io::Result<()> {
     copy_folder(src, dest)
 }
 
